@@ -13,9 +13,16 @@ import { Save, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
-function nodeStyle(status: string, isNew: boolean) {
+function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean) {
   if (status === "offline") {
     return { opacity: 0.45, border: "1px solid #cbd5e1", background: "#f8fafc" };
+  }
+  if (isUnclassified) {
+    return { 
+      border: "2px dashed #0891b2", 
+      background: "#ecfeff",
+      borderRadius: "12px",
+    };
   }
   if (isNew) {
     return { border: "2px solid #06b6d4", background: "#ecfeff" };
@@ -35,20 +42,26 @@ export default function TopologyPage() {
     const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
+      const isUnclassified = node.x < -100;
       const title = node.custom_label || node.device.hostname || node.device.ip;
       return {
         id: node.device_id,
         position: { x: node.x, y: node.y },
         data: {
           label: (
-            <div className="min-w-[150px]">
+            <div className="relative min-w-[150px] p-1">
+              {isUnclassified && (
+                <div className="absolute -top-6 left-0 text-[10px] font-bold uppercase text-cyan-600">
+                  New / Unclassified
+                </div>
+              )}
               <div className="font-semibold">{title}</div>
               <div className="font-mono text-xs text-slate-500">{node.device.ip}</div>
-              <div className="mt-1 text-xs text-slate-500">{node.device.device_type}</div>
+              <div className="mt-1 text-xs text-slate-500 uppercase">{node.device.device_type}</div>
             </div>
           )
         },
-        style: nodeStyle(node.device.status, isNew)
+        style: nodeStyle(node.device.status, isNew, isUnclassified)
       };
     });
     const flowEdges: Edge[] = data.edges.map((edge) => ({
