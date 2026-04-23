@@ -34,12 +34,12 @@ def test_find_existing_device_by_ip_fallback(session: Session):
     session.commit()
 
     # Scan with same IP, now has MAC. 
-    # Tightened logic: IP fallback ONLY happens if scanned.mac is None.
-    # So this should NOT find the existing no-mac device.
+    # Safe Fallback: Should match the existing no-mac device to enrich it.
     scanned = ScannedDevice(ip=ip, mac="11:22:33:44:55:66")
     found = find_existing_device(session, scanned)
     
-    assert found is None
+    assert found is not None
+    assert found.id == device.id
 
 def test_ip_conflict_handling(session: Session):
     # Device A: MAC_A, IP_1

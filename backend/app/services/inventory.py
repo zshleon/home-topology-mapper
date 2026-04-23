@@ -15,10 +15,18 @@ def now_utc() -> datetime:
 def find_existing_device(session: Session, scanned: ScannedDevice) -> Device | None:
     if scanned.mac:
         # 1. Highest priority: Match by MAC
-        # Only in the scan results without MAC should IP matching be used for fallback.
-        return session.exec(select(Device).where(Device.mac == scanned.mac)).first()
+        device_by_mac = session.exec(select(Device).where(Device.mac == scanned.mac)).first()
+        if device_by_mac:
+            return device_by_mac
 
-    # 2. No MAC provided in scan -> use IP matching
+        # 2. Safe Fallback: Match by IP ONLY if the existing record has no MAC.
+        # This prevents duplication when a previously "MAC-less" device finally provides a MAC.
+        device_by_ip = session.exec(select(Device).where(Device.ip == scanned.ip)).first()
+        if device_by_ip and device_by_ip.mac is None:
+            return device_by_ip
+        return None
+
+    # 3. No MAC provided in scan result -> use IP matching
     # Prioritize active/online records to avoid hitting stale offline history
     statement = select(Device).where(Device.ip == scanned.ip)
     # DeviceStatus.online ("online") sorts after DeviceStatus.offline ("offline")
