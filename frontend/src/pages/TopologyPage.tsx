@@ -9,7 +9,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2 } from "lucide-react";
+import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2, Trash2, Info } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
@@ -262,6 +262,12 @@ export default function TopologyPage() {
     }));
   };
 
+  const deleteSelectedEdge = () => {
+    if (!selectedEdgeId) return;
+    setEdges(eds => eds.filter(e => e.id !== selectedEdgeId));
+    setSelectedEdgeId(null);
+  };
+
   const counts = useMemo(() => ({ nodes: nodes.length, edges: edges.length }), [edges.length, nodes.length]);
 
   return (
@@ -397,13 +403,30 @@ export default function TopologyPage() {
                 </div>
               </div>
               
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Actions</label>
+                <div className="mt-3">
+                  <button
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete this link?")) {
+                        deleteSelectedEdge();
+                      }
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Link
+                  </button>
+                </div>
+              </div>
+
               <div className="pt-6 border-t border-slate-100">
                 <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
                   <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
-                    <Wifi className="h-3.5 w-3.5" />
-                    <span>Visual Legend</span>
+                    <Info className="h-3.5 w-3.5" />
+                    <span>Edge Information</span>
                   </div>
-                  <p>Solid lines represent Ethernet connections. Dashed lines represent WiFi connections.</p>
+                  <p>Solid lines represent Ethernet. Dashed represent WiFi. Deleting a link will be permanent after saving.</p>
                 </div>
               </div>
             </div>
