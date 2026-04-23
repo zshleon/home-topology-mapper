@@ -14,9 +14,19 @@ def now_utc() -> datetime:
 
 def find_existing_device(session: Session, scanned: ScannedDevice) -> Device | None:
     if scanned.mac:
-        device = session.exec(select(Device).where(Device.mac == scanned.mac)).first()
-        if device:
-            return device
+        # 1. Highest priority: Match by MAC
+        device_by_mac = session.exec(select(Device).where(Device.mac == scanned.mac)).first()
+        if device_by_mac:
+            return device_by_mac
+
+        # 2. If MAC not found in DB, check by IP but only if the existing record has NO MAC
+        # If it has a different MAC, it's likely a different device that took this IP
+        device_by_ip = session.exec(select(Device).where(Device.ip == scanned.ip)).first()
+        if device_by_ip and device_by_ip.mac is None:
+            return device_by_ip
+        return None
+
+    # 3. No MAC provided in scan (e.g. permission/subnet issues), fallback to IP
     return session.exec(select(Device).where(Device.ip == scanned.ip)).first()
 
 
@@ -39,6 +49,16 @@ def upsert_scanned_devices(session: Session, scanned_devices: list[ScannedDevice
             )
             new_count += 1
         else:
+            # Handle IP change: if this device moved to a new IP,
+            # mark any other device currently registered with that IP as offline
+            if device.ip != scanned.ip:
+                squatter = session.exec(
+                    select(Device).where(Device.ip == scanned.ip, Device.id != device.id)
+                ).first()
+                if squatter:
+                    squatter.status = DeviceStatus.offline
+                    session.add(squatter)
+
             device.ip = scanned.ip
             device.mac = scanned.mac or device.mac
             device.hostname = scanned.hostname or device.hostname
