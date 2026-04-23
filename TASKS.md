@@ -11,7 +11,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 - [x] `scan-nmap-mvp`: Harden nmap discovery and quick/full scan modes.
 - [x] `device-identity-merge`: Improve MAC-first identity matching and IP-change handling.
 - [x] `device-type-heuristics`: Expand home-device type guessing rules and make them configurable.
-- [/] `scan-error-ui`: Show scan errors and permission hints clearly in the dashboard.
+- [x] `scan-error-ui`: Show scan errors and permission hints clearly in the dashboard.
 
 ## Phase 3 - Topology Editor
 
@@ -22,7 +22,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 4 - Persistence And Incremental Scans
 
-- [/] `preserve-manual-edges`: Establish tests to ensure manually confirmed topology is not overwritten by scans.
+- [/] `preserve-manual-edges`: Add tests proving scans cannot overwrite confirmed manual edges.
 - [ ] `new-device-bin`: Place newly discovered devices in a visible unclassified area.
 - [ ] `offline-device-policy`: Add configurable offline retention and visual style.
 
