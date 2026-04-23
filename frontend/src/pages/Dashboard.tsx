@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, GitFork, Radar, RefreshCw } from "lucide-react";
+import { AlertCircle, AlertTriangle, GitFork, Radar, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
 import type { Device, ScanRecord } from "../types";
 
@@ -14,11 +14,17 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
   const [mode, setMode] = useState("quick");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
+  const [diagnostics, setDiagnostics] = useState<{ checks: any[] } | null>(null);
 
   const refresh = async () => {
-    const [deviceData, scanData] = await Promise.all([api.devices(), api.scans()]);
+    const [deviceData, scanData, diagData] = await Promise.all([
+      api.devices(),
+      api.scans(),
+      api.diagnostics().catch(() => null)
+    ]);
     setDevices(deviceData);
     setScans(scanData);
+    setDiagnostics(diagData);
   };
 
   useEffect(() => {
@@ -60,6 +66,23 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
           </p>
         </div>
       </section>
+
+      {diagnostics?.checks.some(c => c.status === "error") && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-rose-800 shadow-soft">
+          <div className="flex items-center gap-3 font-semibold text-lg">
+            <AlertCircle className="h-6 w-6 text-rose-600" />
+            LXC / System Permission Required
+          </div>
+          <div className="mt-3 space-y-3 text-sm opacity-90">
+            {diagnostics.checks.filter(c => c.status === "error").map(check => (
+              <div key={check.id} className="flex flex-col gap-1">
+                <p><span className="font-bold underline decoration-rose-300 underline-offset-4">{check.name}</span>: {check.message}</p>
+                <p className="pl-4 border-l-2 border-rose-200 text-rose-600 font-mono text-xs">{check.hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-4">
         {[

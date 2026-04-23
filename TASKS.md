@@ -18,7 +18,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 - [x] `topology-node-editor`: Add node label/icon editing inside the topology page.
 - [x] `topology-edge-editor`: Let users choose ethernet/wifi/unknown per edge.
 - [x] `topology-delete-link`: Add explicit edge deletion UX.
-- [/] `topology-screenshot-mode`: Add a clean screenshot/share view.
+- [x] `topology-screenshot-mode`: Add a clean screenshot/share view.
 
 ## Phase 4 - Persistence And Incremental Scans
 
@@ -28,6 +28,6 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 5 - Docker And LXC Fit
 
-- [ ] `lxc-permission-checks`: Add startup diagnostics for nmap, NET_RAW, host networking, and subnet reachability.
+- [/] `lxc-permission-checks`: Add startup diagnostics for nmap, NET_RAW, host networking, and subnet reachability.
 - [ ] `compose-production-polish`: Add healthcheck, labels, and documented env vars.
 - [x] `release-template`: Add GitHub release checklist and versioning.

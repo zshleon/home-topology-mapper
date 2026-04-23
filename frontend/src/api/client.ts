@@ -50,5 +50,6 @@ export const api = {
   topology: () => request<Topology>("/api/topology"),
   saveTopology: (payload: unknown) =>
     request<Topology>("/api/topology", { method: "PUT", body: JSON.stringify(payload) }),
-  config: () => request<{ offline_retention_days: number }>("/api/config")
+  config: () => request<{ offline_retention_days: number }>("/api/config"),
+  diagnostics: () => request<{ checks: any[]; config_summary: any }>("/api/diagnostics")
 };

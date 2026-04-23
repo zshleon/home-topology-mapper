@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.db.session import init_db
-from app.routers import config, devices, health, scans, topology
+from app.routers import config, devices, diagnostics, health, scans, topology
 
 
 def create_app() -> FastAPI:
@@ -23,6 +23,7 @@ def create_app() -> FastAPI:
     app.include_router(scans.router)
     app.include_router(topology.router)
     app.include_router(config.router)
+    app.include_router(diagnostics.router)
 
     @app.on_event("startup")
     def on_startup() -> None:
@@ -36,4 +37,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-
