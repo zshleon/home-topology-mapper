@@ -26,26 +26,51 @@ const ICONS: Record<string, any> = {
   unknown: HelpCircle
 };
 
-function nodeStyle(status: string, isNew: boolean, isSelected: boolean) {
-  const base = status === "offline" 
-    ? { opacity: 0.45 } 
-    : { opacity: 1 };
+function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isStale: boolean, isSelected: boolean) {
+  const baseShadow = isSelected ? "0 0 0 2px rgba(15, 23, 42, 0.1)" : "none";
+  const baseBorder = isSelected ? "2px solid #0f172a" : null;
 
-  return {
-    ...base,
-    border: isSelected 
-      ? "2px solid #0f172a" 
-      : isNew ? "2px solid #06b6d4" : "1px solid #dbe2ea",
+  if (status === "offline") {
+    return { 
+      opacity: isStale ? 0.25 : 0.45, 
+      border: baseBorder || (isStale ? "1px dashed #94a3b8" : "1px solid #cbd5e1"), 
+      background: isStale ? "#f1f5f9" : "#f8fafc",
+      filter: isStale ? "grayscale(100%)" : "none",
+      boxShadow: baseShadow,
+      borderRadius: "8px",
+      padding: 0,
+    };
+  }
+  if (isUnclassified) {
+    return { 
+      border: baseBorder || "2px dashed #0891b2", 
+      background: "#ecfeff",
+      borderRadius: "12px",
+      boxShadow: baseShadow,
+      padding: 0,
+    };
+  }
+  if (isNew) {
+    return { 
+      border: baseBorder || "2px solid #06b6d4", 
+      background: "#ecfeff",
+      borderRadius: "8px",
+      boxShadow: baseShadow,
+      padding: 0,
+    };
+  }
+  return { 
+    border: baseBorder || "1px solid #dbe2ea", 
     background: "#ffffff",
     borderRadius: "8px",
-    boxShadow: isSelected ? "0 0 0 2px rgba(15, 23, 42, 0.1)" : "none",
+    boxShadow: baseShadow,
     padding: 0,
   };
 }
 
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
-  const [retentionDays, setRetentionDays] = useState(30);
+  const [config, setConfig] = useState<{ offline_retention_days: number } | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -57,24 +82,44 @@ export default function TopologyPage() {
   );
 
   const load = useCallback(async () => {
-    const data = await api.topology();
+    const [data, configData] = await Promise.all([
+      api.topology(), 
+      (api as any).config ? (api as any).config() : Promise.resolve({ offline_retention_days: 30 })
+    ]);
     setTopology(data);
-    const latestSeen = data.nodes.reduce((max: number, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    setConfig(configData);
+    
+    const now = Date.now();
+    const retentionDays = configData.offline_retention_days;
+    const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
+      const isUnclassified = node.x < -100;
+      const offlineAge = now - Date.parse(node.device.last_seen);
+      const isStale = node.device.status === "offline" && offlineAge > (retentionDays * MS_PER_DAY);
+      const isSelected = node.device_id === selectedNodeId;
       const Icon = ICONS[node.icon || node.device.device_type] || ICONS.unknown;
-
       const title = node.custom_label || node.device.hostname || node.device.ip;
+
       return {
         id: node.device_id,
         position: { x: node.x, y: node.y },
-        selected: node.device_id === selectedNodeId,
+        selected: isSelected,
         data: {
           device: node.device,
           customLabel: node.custom_label,
           icon: node.icon,
+          isNew,
+          isUnclassified,
+          isStale,
           label: (
             <div className="relative flex items-center gap-3 min-w-[180px] p-3 text-left">
+              {(isUnclassified || isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {isStale ? "Stale / Offline" : "New / Unclassified"}
+                </div>
+              )}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
                 <Icon className="h-5 w-5 text-slate-600" />
               </div>
@@ -85,10 +130,11 @@ export default function TopologyPage() {
             </div>
           )
         },
-        style: nodeStyle(node.device.status, isNew, node.device_id === selectedNodeId)
+        style: nodeStyle(node.device.status, isNew, isUnclassified, isStale, isSelected)
       };
     });
-    const flowEdges: Edge[] = data.edges.map((edge: any) => ({
+    
+    const flowEdges: Edge[] = data.edges.map((edge) => ({
       id: edge.id,
       source: edge.from_device_id,
       target: edge.to_device_id,
@@ -96,9 +142,10 @@ export default function TopologyPage() {
       label: edge.confirmed_by_user ? "manual" : "auto",
       style: { stroke: edge.confirmed_by_user ? "#111827" : "#94a3b8" }
     }));
+    
     setNodes(flowNodes);
     setEdges(flowEdges);
-  }, [setEdges, setNodes]);
+  }, [setEdges, setNodes, selectedNodeId]);
 
   useEffect(() => {
     load().catch((err) => setMessage(String(err)));
@@ -165,6 +212,11 @@ export default function TopologyPage() {
           ...nextData,
           label: (
             <div className="relative flex items-center gap-3 min-w-[180px] p-3 text-left">
+              {(n.data.isUnclassified || n.data.isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${n.data.isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {n.data.isStale ? "Stale / Offline" : "New / Unclassified"}
+                </div>
+              )}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
                 <Icon className="h-5 w-5 text-slate-600" />
               </div>
@@ -175,7 +227,7 @@ export default function TopologyPage() {
             </div>
           )
         },
-        style: nodeStyle(n.data.device.status, false, true)
+        style: nodeStyle(n.data.device.status, n.data.isNew, n.data.isUnclassified, n.data.isStale, true)
       };
     }));
   };
@@ -211,19 +263,9 @@ export default function TopologyPage() {
             onConnect={onConnect}
             onNodeClick={(_, node) => {
               setSelectedNodeId(node.id);
-              setNodes(nds => nds.map(n => ({
-                ...n,
-                selected: n.id === node.id,
-                style: nodeStyle(n.data.device.status, false, n.id === node.id)
-              })));
             }}
             onPaneClick={() => {
               setSelectedNodeId(null);
-              setNodes(nds => nds.map(n => ({
-                ...n,
-                selected: false,
-                style: nodeStyle(n.data.device.status, false, false)
-              })));
             }}
             fitView
           >
