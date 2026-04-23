@@ -9,7 +9,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2, Trash2, Info } from "lucide-react";
+import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2, Trash2, Info, EyeOff, Printer as PrintIcon } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
@@ -84,6 +84,7 @@ export default function TopologyPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const selectedNode = useMemo(() => 
@@ -272,25 +273,45 @@ export default function TopologyPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-semibold">Topology</h2>
-          <p className="text-sm text-slate-500">Drag nodes, connect devices, and save the layout. Manual edges are preserved across scans.</p>
+      {!isScreenshotMode && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold">Topology</h2>
+            <p className="text-sm text-slate-500">Drag nodes, connect devices, and save the layout.</p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setIsScreenshotMode(true)} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft hover:bg-slate-50">
+              <Share2 className="h-4 w-4" />
+              Screenshot / Share
+            </button>
+            <button onClick={() => load()} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft hover:bg-slate-50">
+              <RefreshCw className="h-4 w-4" />
+              Reload
+            </button>
+            <button onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-white shadow-soft">
+              <Save className="h-4 w-4" />
+              Save
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => load()} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft">
-            <RefreshCw className="h-4 w-4" />
-            Reload
-          </button>
-          <button onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-white shadow-soft">
-            <Save className="h-4 w-4" />
-            Save
-          </button>
-        </div>
-      </div>
-      {message && <div className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-800">{message}</div>}
-      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-        <div className="relative h-[720px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+      )}
+      
+      {message && !isScreenshotMode && <div className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-800">{message}</div>}
+      
+      <div className={`grid gap-5 ${isScreenshotMode ? "grid-cols-1" : "lg:grid-cols-[1fr_300px]"}`}>
+        <div className={`relative overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft ${isScreenshotMode ? "h-[85vh]" : "h-[720px]"}`}>
+          {isScreenshotMode && (
+            <div className="absolute top-4 right-4 z-50 flex gap-2">
+              <button onClick={() => window.print()} className="rounded-lg bg-white/90 px-4 py-2 text-slate-900 shadow-md backdrop-blur hover:bg-white">
+                <PrintIcon className="h-4 w-4 inline mr-2" />
+                Print
+              </button>
+              <button onClick={() => setIsScreenshotMode(false)} className="rounded-lg bg-slate-900/90 px-4 py-2 text-white shadow-md backdrop-blur hover:bg-slate-900">
+                <EyeOff className="h-4 w-4 inline mr-2" />
+                Exit Mode
+              </button>
+            </div>
+          )}
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -298,10 +319,12 @@ export default function TopologyPage() {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={(_, node) => {
+              if (isScreenshotMode) return;
               setSelectedNodeId(node.id);
               setSelectedEdgeId(null);
             }}
             onEdgeClick={(_, edge) => {
+              if (isScreenshotMode) return;
               setSelectedEdgeId(edge.id);
               setSelectedNodeId(null);
             }}
@@ -316,129 +339,131 @@ export default function TopologyPage() {
           </ReactFlow>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-700 text-lg">Properties</h3>
-            {(selectedNodeId || selectedEdgeId) && (
-              <button onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); }} className="p-1 hover:bg-slate-100 rounded">
-                <CloseIcon className="h-4 w-4 text-slate-400" />
-              </button>
+        {!isScreenshotMode && (
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-slate-700 text-lg">Properties</h3>
+              {(selectedNodeId || selectedEdgeId) && (
+                <button onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); }} className="p-1 hover:bg-slate-100 rounded">
+                  <CloseIcon className="h-4 w-4 text-slate-400" />
+                </button>
+              )}
+            </div>
+            
+            {selectedNode ? (
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Custom Label</label>
+                  <input 
+                    type="text"
+                    value={selectedNode.data.customLabel || ""}
+                    onChange={(e) => updateSelectedNode({ customLabel: e.target.value })}
+                    className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500"
+                    placeholder="e.g. Living Room TV"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Icon</label>
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {Object.entries(ICONS).map(([key, Icon]) => (
+                      <button
+                        key={key}
+                        onClick={() => updateSelectedNode({ icon: key })}
+                        className={`flex h-10 items-center justify-center rounded-lg border ${
+                          (selectedNode.data.icon || selectedNode.data.device.device_type) === key
+                            ? "border-slate-950 bg-slate-950 text-white"
+                            : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-50">
+                  <div className="text-xs text-slate-400">
+                    <div className="flex justify-between py-1">
+                      <span>IP Address</span>
+                      <span className="font-mono">{selectedNode.data.device.ip}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>MAC</span>
+                      <span className="font-mono text-[9px] uppercase">{selectedNode.data.device.mac || "Unknown"}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span>Status</span>
+                      <span className={selectedNode.data.device.status === "online" ? "text-emerald-600" : "text-rose-600"}>
+                        {selectedNode.data.device.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : selectedEdge ? (
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link Type</label>
+                  <div className="mt-3 grid gap-2">
+                    {[
+                      { id: "ethernet", label: "Ethernet (Wired)" },
+                      { id: "wifi", label: "WiFi (Wireless)" },
+                      { id: "unknown", label: "Unknown / Legacy" }
+                    ].map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => updateSelectedEdge(type.id)}
+                        className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition-all ${
+                          selectedEdge.data?.linkType === type.id
+                            ? "border-slate-950 bg-slate-950 text-white shadow-md"
+                            : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+                        }`}
+                      >
+                        <span>{type.label}</span>
+                        {selectedEdge.data?.linkType === type.id && <MousePointer2 className="h-4 w-4" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Actions</label>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this link?")) {
+                          deleteSelectedEdge();
+                        }
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Delete Link
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t border-slate-100">
+                  <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
+                    <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
+                      <Info className="h-3.5 w-3.5" />
+                      <span>Edge Information</span>
+                    </div>
+                    <p>Solid lines represent Ethernet. Dashed represent WiFi. Deleting a link will be permanent after saving.</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-4">
+                <Share2 className="h-10 w-10 mb-3 opacity-20" />
+                <p>Select a node or connection line on the map to edit its properties.</p>
+              </div>
             )}
           </div>
-          
-          {selectedNode ? (
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Custom Label</label>
-                <input 
-                  type="text"
-                  value={selectedNode.data.customLabel || ""}
-                  onChange={(e) => updateSelectedNode({ customLabel: e.target.value })}
-                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500"
-                  placeholder="e.g. Living Room TV"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Icon</label>
-                <div className="mt-2 grid grid-cols-4 gap-2">
-                  {Object.entries(ICONS).map(([key, Icon]) => (
-                    <button
-                      key={key}
-                      onClick={() => updateSelectedNode({ icon: key })}
-                      className={`flex h-10 items-center justify-center rounded-lg border ${
-                        (selectedNode.data.icon || selectedNode.data.device.device_type) === key
-                          ? "border-slate-950 bg-slate-950 text-white"
-                          : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-50">
-                <div className="text-xs text-slate-400">
-                  <div className="flex justify-between py-1">
-                    <span>IP Address</span>
-                    <span className="font-mono">{selectedNode.data.device.ip}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span>MAC</span>
-                    <span className="font-mono text-[9px] uppercase">{selectedNode.data.device.mac || "Unknown"}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span>Status</span>
-                    <span className={selectedNode.data.device.status === "online" ? "text-emerald-600" : "text-rose-600"}>
-                      {selectedNode.data.device.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : selectedEdge ? (
-            <div className="space-y-6">
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link Type</label>
-                <div className="mt-3 grid gap-2">
-                  {[
-                    { id: "ethernet", label: "Ethernet (Wired)" },
-                    { id: "wifi", label: "WiFi (Wireless)" },
-                    { id: "unknown", label: "Unknown / Legacy" }
-                  ].map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => updateSelectedEdge(type.id)}
-                      className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition-all ${
-                        selectedEdge.data?.linkType === type.id
-                          ? "border-slate-950 bg-slate-950 text-white shadow-md"
-                          : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
-                      }`}
-                    >
-                      <span>{type.label}</span>
-                      {selectedEdge.data?.linkType === type.id && <MousePointer2 className="h-4 w-4" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Actions</label>
-                <div className="mt-3">
-                  <button
-                    onClick={() => {
-                      if (confirm("Are you sure you want to delete this link?")) {
-                        deleteSelectedEdge();
-                      }
-                    }}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete Link
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-slate-100">
-                <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
-                  <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
-                    <Info className="h-3.5 w-3.5" />
-                    <span>Edge Information</span>
-                  </div>
-                  <p>Solid lines represent Ethernet. Dashed represent WiFi. Deleting a link will be permanent after saving.</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-4">
-              <Share2 className="h-10 w-10 mb-3 opacity-20" />
-              <p>Select a node or connection line on the map to edit its properties.</p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
-      <p className="text-sm text-slate-500">{counts.nodes} nodes, {counts.edges} links</p>
+      {!isScreenshotMode && <p className="text-sm text-slate-500">{counts.nodes} nodes, {counts.edges} links</p>}
     </div>
   );
 }
