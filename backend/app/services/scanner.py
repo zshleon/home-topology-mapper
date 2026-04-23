@@ -200,30 +200,74 @@ def _parse_ports(xml_text: str) -> dict[str, list[int]]:
     return by_ip
 
 
+# Heuristic rules for device type inference.
+# Order matters: first match wins.
+HEURISTICS = [
+    # Network Infrastructure (is_network_node=True)
+    {"type": DeviceType.router, "is_node": True, "host_number": 1},
+    {"type": DeviceType.router, "is_node": True, "ports_all": [53, 80, 443]},
+    {"type": DeviceType.access_point, "is_node": True, "vendor": ["ubiquiti", "unifi", "aruba"]},
+    {"type": DeviceType.access_point, "is_node": True, "hostname": ["ap-", "unifi-ap"]},
+    
+    # IoT & Home Automation (High priority as they often have ambiguous names)
+    {"type": DeviceType.iot, "is_node": False, "hostname": ["esp-", "shelly", "sonoff", "tasmota", "zigbee", "tuya", "aqara"]},
+    {"type": DeviceType.iot, "is_node": False, "vendor": ["espressif", "tuya", "yeelight"]},
+    {"type": DeviceType.camera, "is_node": False, "hostname": ["camera", "cam-", "ipc-", "reolink"]},
+    {"type": DeviceType.camera, "is_node": False, "vendor": ["hikvision", "dahua", "amcrest", "reolink", "foscam", "axis"]},
+
+    # Infrastructure Cont.
+    {"type": DeviceType.switch, "is_node": True, "hostname": ["switch-", "sw-", "tplink-sw"]},
+    {"type": DeviceType.switch, "is_node": True, "vendor": ["tp-link"], "hostname": ["switch"]},
+    
+    # Servers & Storage
+    {"type": DeviceType.nas, "is_node": False, "ports_any": [2049, 8096, 9000, 5000, 5001]},
+    {"type": DeviceType.nas, "is_node": False, "vendor": ["synology", "qnap", "asustor", "terramaster"]},
+    {"type": DeviceType.server, "is_node": False, "ports_any": [8006, 2222, 10000]},
+    {"type": DeviceType.server, "is_node": False, "hostname": ["pve", "proxmox", "esxi", "unraid", "truenas", "server"]},
+    
+    # Multimedia & Entertainment
+    {"type": DeviceType.media, "is_node": False, "ports_any": [8008, 8443, 32400]},
+    {"type": DeviceType.media, "is_node": False, "hostname": ["kodi", "plex", "shield", "apple-tv", "chromecast", "roku"]},
+    {"type": DeviceType.media, "is_node": False, "vendor": ["sonos", "denon", "marantz", "roku", "nvidia"]},
+    
+    # Personal Devices
+    {"type": DeviceType.phone, "is_node": False, "hostname": ["iphone", "android", "pixel", "galaxy"]},
+    {"type": DeviceType.phone, "is_node": False, "ports_any": [62078]}, # iOS lockdown service
+    {"type": DeviceType.tablet, "is_node": False, "hostname": ["ipad", "tablet"]},
+    {"type": DeviceType.pc, "is_node": False, "ports_any": [3389, 5900]},
+    {"type": DeviceType.pc, "is_node": False, "hostname": ["desktop", "laptop", "pc-", "-pc", "macbook", "workstation"]},
+    {"type": DeviceType.pc, "is_node": False, "vendor": ["dell", "hp", "lenovo", "asus"]},
+
+    # Printers & Fallback
+    {"type": DeviceType.printer, "is_node": False, "ports_any": [631, 9100]},
+    {"type": DeviceType.printer, "is_node": False, "vendor": ["hp", "canon", "epson", "brother", "lexmark"]},
+]
+
+
 def _guess_type(device: ScannedDevice, subnet: str) -> tuple[DeviceType, bool]:
     name = (device.hostname or "").lower()
     vendor = (device.vendor or "").lower()
     ports = set(device.ports)
-    host_number = int(ipaddress.ip_address(device.ip)) & 0xFF
+    host_num = int(ipaddress.ip_address(device.ip)) & 0xFF
 
-    if host_number == 1 or {53, 80, 443}.issubset(ports):
-        return DeviceType.router, True
-    if "tp-link" in vendor or "tplink" in name:
-        return DeviceType.switch, True
-    if 2049 in ports or 8096 in ports or 9000 in ports:
-        return DeviceType.nas, False
-    if 3389 in ports or ({139, 445} & ports and 22 not in ports):
-        return DeviceType.pc, False
-    if 631 in ports:
-        return DeviceType.printer, False
-    if 62078 in ports or "apple" in vendor:
-        return DeviceType.phone, False
-    if 8000 in ports and "camera" in name:
-        return DeviceType.camera, False
-    if 8008 in ports or 8443 in ports:
-        return DeviceType.media, False
-    if 22 in ports or 8006 in ports:
-        return DeviceType.server, False
+    for rule in HEURISTICS:
+        match = False
+        
+        # Condition checks
+        if "host_number" in rule and host_num == rule["host_number"]:
+            match = True
+        elif "hostname" in rule and any(x in name for x in rule["hostname"]):
+            match = True
+        elif "vendor" in rule and any(x in vendor for x in rule["vendor"]):
+            match = True
+        elif "ports_all" in rule and set(rule["ports_all"]).issubset(ports):
+            match = True
+        elif "ports_any" in rule and any(p in ports for p in rule["ports_any"]):
+            match = True
+            
+        if match:
+            return rule["type"], rule["is_node"]
+
     return DeviceType.unknown, False
 
 
