@@ -15,8 +15,8 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 3 - Topology Editor
 
-- [/] `topology-node-editor`: Add node label/icon editing inside the topology page.
-- [ ] `topology-edge-editor`: Let users choose ethernet/wifi/unknown per edge.
+- [x] `topology-node-editor`: Add node label/icon editing inside the topology page.
+- [/] `topology-edge-editor`: Let users choose ethernet/wifi/unknown per edge.
 - [ ] `topology-delete-link`: Add explicit edge deletion UX.
 - [ ] `topology-screenshot-mode`: Add a clean screenshot/share view.
 

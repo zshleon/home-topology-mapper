@@ -9,7 +9,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon } from "lucide-react";
+import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2 } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
@@ -68,17 +68,32 @@ function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isSt
   };
 }
 
+function edgeStyle(linkType: string, isConfirmed: boolean, isSelected: boolean) {
+  const stroke = isSelected ? "#0f172a" : isConfirmed ? "#1e293b" : "#94a3b8";
+  return {
+    stroke,
+    strokeWidth: isSelected ? 3 : 2,
+    strokeDasharray: linkType === "wifi" ? "5,5" : "none",
+  };
+}
+
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [config, setConfig] = useState<{ offline_retention_days: number } | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const selectedNode = useMemo(() => 
     nodes.find(n => n.id === selectedNodeId), 
     [nodes, selectedNodeId]
+  );
+  
+  const selectedEdge = useMemo(() => 
+    edges.find(e => e.id === selectedEdgeId), 
+    [edges, selectedEdgeId]
   );
 
   const load = useCallback(async () => {
@@ -138,14 +153,15 @@ export default function TopologyPage() {
       id: edge.id,
       source: edge.from_device_id,
       target: edge.to_device_id,
-      animated: !edge.confirmed_by_user,
-      label: edge.confirmed_by_user ? "manual" : "auto",
-      style: { stroke: edge.confirmed_by_user ? "#111827" : "#94a3b8" }
+      animated: !edge.confirmed_by_user && edge.link_type === "unknown",
+      label: edge.link_type !== "unknown" ? edge.link_type : (edge.confirmed_by_user ? "manual" : "auto"),
+      data: { linkType: edge.link_type, confirmed: edge.confirmed_by_user },
+      style: edgeStyle(edge.link_type, edge.confirmed_by_user, edge.id === selectedEdgeId)
     }));
     
     setNodes(flowNodes);
     setEdges(flowEdges);
-  }, [setEdges, setNodes, selectedNodeId]);
+  }, [setEdges, setNodes, selectedNodeId, selectedEdgeId]);
 
   useEffect(() => {
     load().catch((err) => setMessage(String(err)));
@@ -159,8 +175,9 @@ export default function TopologyPage() {
             ...connection,
             id: `manual-${connection.source}-${connection.target}-${Date.now()}`,
             label: "manual",
+            data: { linkType: "unknown", confirmed: true },
             animated: false,
-            style: { stroke: "#111827" }
+            style: edgeStyle("unknown", true, false)
           },
           current
         )
@@ -188,7 +205,7 @@ export default function TopologyPage() {
       .map((edge) => ({
         from_device_id: edge.source,
         to_device_id: edge.target,
-        link_type: "unknown",
+        link_type: edge.data?.linkType || "unknown",
         confidence: "manual",
         confirmed_by_user: true
       }));
@@ -231,6 +248,19 @@ export default function TopologyPage() {
       };
     }));
   };
+  
+  const updateSelectedEdge = (linkType: string) => {
+    if (!selectedEdgeId) return;
+    setEdges((eds) => eds.map((e) => {
+      if (e.id !== selectedEdgeId) return e;
+      return {
+        ...e,
+        label: linkType !== "unknown" ? linkType : "manual",
+        data: { ...e.data, linkType },
+        style: edgeStyle(linkType, e.data?.confirmed || true, true)
+      };
+    }));
+  };
 
   const counts = useMemo(() => ({ nodes: nodes.length, edges: edges.length }), [edges.length, nodes.length]);
 
@@ -263,9 +293,15 @@ export default function TopologyPage() {
             onConnect={onConnect}
             onNodeClick={(_, node) => {
               setSelectedNodeId(node.id);
+              setSelectedEdgeId(null);
+            }}
+            onEdgeClick={(_, edge) => {
+              setSelectedEdgeId(edge.id);
+              setSelectedNodeId(null);
             }}
             onPaneClick={() => {
               setSelectedNodeId(null);
+              setSelectedEdgeId(null);
             }}
             fitView
           >
@@ -276,9 +312,9 @@ export default function TopologyPage() {
 
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-slate-700 text-lg">Node Properties</h3>
-            {selectedNodeId && (
-              <button onClick={() => setSelectedNodeId(null)} className="p-1 hover:bg-slate-100 rounded">
+            <h3 className="font-semibold text-slate-700 text-lg">Properties</h3>
+            {(selectedNodeId || selectedEdgeId) && (
+              <button onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); }} className="p-1 hover:bg-slate-100 rounded">
                 <CloseIcon className="h-4 w-4 text-slate-400" />
               </button>
             )}
@@ -335,10 +371,46 @@ export default function TopologyPage() {
                 </div>
               </div>
             </div>
+          ) : selectedEdge ? (
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link Type</label>
+                <div className="mt-3 grid gap-2">
+                  {[
+                    { id: "ethernet", label: "Ethernet (Wired)" },
+                    { id: "wifi", label: "WiFi (Wireless)" },
+                    { id: "unknown", label: "Unknown / Legacy" }
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => updateSelectedEdge(type.id)}
+                      className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition-all ${
+                        selectedEdge.data?.linkType === type.id
+                          ? "border-slate-950 bg-slate-950 text-white shadow-md"
+                          : "border-slate-100 bg-slate-50 text-slate-600 hover:border-slate-200"
+                      }`}
+                    >
+                      <span>{type.label}</span>
+                      {selectedEdge.data?.linkType === type.id && <MousePointer2 className="h-4 w-4" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="pt-6 border-t border-slate-100">
+                <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
+                  <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
+                    <Wifi className="h-3.5 w-3.5" />
+                    <span>Visual Legend</span>
+                  </div>
+                  <p>Solid lines represent Ethernet connections. Dashed lines represent WiFi connections.</p>
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-4">
-              <Cpu className="h-10 w-10 mb-3 opacity-20" />
-              <p>Select a node on the map to edit its label and icon.</p>
+              <Share2 className="h-10 w-10 mb-3 opacity-20" />
+              <p>Select a node or connection line on the map to edit its properties.</p>
             </div>
           )}
         </div>
