@@ -31,7 +31,7 @@ The default `docker-compose.yml` already does this.
 
 ## MVP Features
 
-- Subnet scan through `nmap`
+- Subnet scan through `nmap` with quick and full modes
 - Device inventory with IP, MAC, hostname, vendor, type guess, online/offline state
 - Topology editor powered by React Flow
 - Node dragging and manual edge creation
@@ -39,6 +39,7 @@ The default `docker-compose.yml` already does this.
 - Incremental scans preserve manual topology
 - New devices are highlighted
 - Offline devices are dimmed
+- Scan failures keep a human-readable hint in the history record
 
 ## Development
 

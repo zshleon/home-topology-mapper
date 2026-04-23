@@ -9,18 +9,63 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw, Wifi, Share2, MousePointer2 } from "lucide-react";
+import { Save, RefreshCw, Server, Smartphone, Laptop, Printer, Wifi, Cpu, Camera, HelpCircle, X as CloseIcon, Share2, MousePointer2 } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
-function nodeStyle(status: string, isNew: boolean) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const ICONS: Record<string, any> = {
+  router: Wifi,
+  server: Server,
+  phone: Smartphone,
+  pc: Laptop,
+  printer: Printer,
+  iot: Cpu,
+  camera: Camera,
+  unknown: HelpCircle
+};
+
+function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isStale: boolean, isSelected: boolean) {
+  const baseShadow = isSelected ? "0 0 0 2px rgba(15, 23, 42, 0.1)" : "none";
+  const baseBorder = isSelected ? "2px solid #0f172a" : null;
+
   if (status === "offline") {
-    return { opacity: 0.45, border: "1px solid #cbd5e1", background: "#f8fafc" };
+    return { 
+      opacity: isStale ? 0.25 : 0.45, 
+      border: baseBorder || (isStale ? "1px dashed #94a3b8" : "1px solid #cbd5e1"), 
+      background: isStale ? "#f1f5f9" : "#f8fafc",
+      filter: isStale ? "grayscale(100%)" : "none",
+      boxShadow: baseShadow,
+      borderRadius: "8px",
+      padding: 0,
+    };
+  }
+  if (isUnclassified) {
+    return { 
+      border: baseBorder || "2px dashed #0891b2", 
+      background: "#ecfeff",
+      borderRadius: "12px",
+      boxShadow: baseShadow,
+      padding: 0,
+    };
   }
   if (isNew) {
-    return { border: "2px solid #06b6d4", background: "#ecfeff" };
+    return { 
+      border: baseBorder || "2px solid #06b6d4", 
+      background: "#ecfeff",
+      borderRadius: "8px",
+      boxShadow: baseShadow,
+      padding: 0,
+    };
   }
-  return { border: "1px solid #dbe2ea", background: "#ffffff" };
+  return { 
+    border: baseBorder || "1px solid #dbe2ea", 
+    background: "#ffffff",
+    borderRadius: "8px",
+    boxShadow: baseShadow,
+    padding: 0,
+  };
 }
 
 function edgeStyle(linkType: string, isConfirmed: boolean, isSelected: boolean) {
@@ -34,50 +79,89 @@ function edgeStyle(linkType: string, isConfirmed: boolean, isSelected: boolean) 
 
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
+  const [config, setConfig] = useState<{ offline_retention_days: number } | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  const selectedNode = useMemo(() => 
+    nodes.find(n => n.id === selectedNodeId), 
+    [nodes, selectedNodeId]
+  );
+  
   const selectedEdge = useMemo(() => 
     edges.find(e => e.id === selectedEdgeId), 
     [edges, selectedEdgeId]
   );
 
   const load = useCallback(async () => {
-    const data = await api.topology();
+    const [data, configData] = await Promise.all([
+      api.topology(), 
+      (api as any).config ? (api as any).config() : Promise.resolve({ offline_retention_days: 30 })
+    ]);
     setTopology(data);
-    const latestSeen = data.nodes.reduce((max: number, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    setConfig(configData);
+    
+    const now = Date.now();
+    const retentionDays = configData.offline_retention_days;
+    const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
+      const isUnclassified = node.x < -100;
+      const offlineAge = now - Date.parse(node.device.last_seen);
+      const isStale = node.device.status === "offline" && offlineAge > (retentionDays * MS_PER_DAY);
+      const isSelected = node.device_id === selectedNodeId;
+      const Icon = ICONS[node.icon || node.device.device_type] || ICONS.unknown;
       const title = node.custom_label || node.device.hostname || node.device.ip;
+
       return {
         id: node.device_id,
         position: { x: node.x, y: node.y },
+        selected: isSelected,
         data: {
+          device: node.device,
+          customLabel: node.custom_label,
+          icon: node.icon,
+          isNew,
+          isUnclassified,
+          isStale,
           label: (
-            <div className="min-w-[150px]">
-              <div className="font-semibold">{title}</div>
-              <div className="font-mono text-xs text-slate-500">{node.device.ip}</div>
-              <div className="mt-1 text-xs text-slate-500">{node.device.device_type}</div>
+            <div className="relative flex items-center gap-3 min-w-[180px] p-3 text-left">
+              {(isUnclassified || isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {isStale ? "Stale / Offline" : "New / Unclassified"}
+                </div>
+              )}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                <Icon className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <div className="truncate font-semibold">{title}</div>
+                <div className="truncate font-mono text-[10px] text-slate-400">{node.device.ip}</div>
+              </div>
             </div>
           )
         },
-        style: nodeStyle(node.device.status, isNew)
+        style: nodeStyle(node.device.status, isNew, isUnclassified, isStale, isSelected)
       };
     });
-    const flowEdges: Edge[] = data.edges.map((edge: any) => ({
+    
+    const flowEdges: Edge[] = data.edges.map((edge) => ({
       id: edge.id,
       source: edge.from_device_id,
       target: edge.to_device_id,
       animated: !edge.confirmed_by_user && edge.link_type === "unknown",
       label: edge.link_type !== "unknown" ? edge.link_type : (edge.confirmed_by_user ? "manual" : "auto"),
       data: { linkType: edge.link_type, confirmed: edge.confirmed_by_user },
-      style: edgeStyle(edge.link_type, edge.confirmed_by_user, false)
+      style: edgeStyle(edge.link_type, edge.confirmed_by_user, edge.id === selectedEdgeId)
     }));
+    
     setNodes(flowNodes);
     setEdges(flowEdges);
-  }, [setEdges, setNodes]);
+  }, [setEdges, setNodes, selectedNodeId, selectedEdgeId]);
 
   useEffect(() => {
     load().catch((err) => setMessage(String(err)));
@@ -111,8 +195,8 @@ export default function TopologyPage() {
         device_id: node.id,
         x: node.position.x,
         y: node.position.y,
-        custom_label: existing?.custom_label ?? null,
-        icon: existing?.icon ?? null,
+        custom_label: node.data.customLabel,
+        icon: node.data.icon,
         pinned: true
       };
     });
@@ -131,6 +215,40 @@ export default function TopologyPage() {
     await load();
   };
 
+  const updateSelectedNode = (updates: { customLabel?: string; icon?: string }) => {
+    if (!selectedNodeId) return;
+    setNodes(nds => nds.map(n => {
+      if (n.id !== selectedNodeId) return n;
+      const nextData = { ...n.data, ...updates };
+      const Icon = ICONS[nextData.icon || nextData.device.device_type] || ICONS.unknown;
+      const title = nextData.customLabel || nextData.device.hostname || nextData.device.ip;
+      
+      return {
+        ...n,
+        data: {
+          ...nextData,
+          label: (
+            <div className="relative flex items-center gap-3 min-w-[180px] p-3 text-left">
+              {(n.data.isUnclassified || n.data.isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${n.data.isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {n.data.isStale ? "Stale / Offline" : "New / Unclassified"}
+                </div>
+              )}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-50">
+                <Icon className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <div className="truncate font-semibold">{title}</div>
+                <div className="truncate font-mono text-[10px] text-slate-400">{nextData.device.ip}</div>
+              </div>
+            </div>
+          )
+        },
+        style: nodeStyle(n.data.device.status, n.data.isNew, n.data.isUnclassified, n.data.isStale, true)
+      };
+    }));
+  };
+  
   const updateSelectedEdge = (linkType: string) => {
     if (!selectedEdgeId) return;
     setEdges((eds) => eds.map((e) => {
@@ -173,19 +291,17 @@ export default function TopologyPage() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={(_, node) => {
+              setSelectedNodeId(node.id);
+              setSelectedEdgeId(null);
+            }}
             onEdgeClick={(_, edge) => {
               setSelectedEdgeId(edge.id);
-              setEdges(eds => eds.map(e => ({
-                ...e,
-                style: edgeStyle(e.data?.linkType || "unknown", e.data?.confirmed || false, e.id === edge.id)
-              })));
+              setSelectedNodeId(null);
             }}
             onPaneClick={() => {
+              setSelectedNodeId(null);
               setSelectedEdgeId(null);
-              setEdges(eds => eds.map(e => ({
-                ...e,
-                style: edgeStyle(e.data?.linkType || "unknown", e.data?.confirmed || false, false)
-              })));
             }}
             fitView
           >
@@ -195,9 +311,67 @@ export default function TopologyPage() {
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h3 className="font-semibold text-slate-700 text-lg mb-4">Properties</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-slate-700 text-lg">Properties</h3>
+            {(selectedNodeId || selectedEdgeId) && (
+              <button onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); }} className="p-1 hover:bg-slate-100 rounded">
+                <CloseIcon className="h-4 w-4 text-slate-400" />
+              </button>
+            )}
+          </div>
           
-          {selectedEdge ? (
+          {selectedNode ? (
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Custom Label</label>
+                <input 
+                  type="text"
+                  value={selectedNode.data.customLabel || ""}
+                  onChange={(e) => updateSelectedNode({ customLabel: e.target.value })}
+                  className="mt-1.5 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500"
+                  placeholder="e.g. Living Room TV"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Icon</label>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  {Object.entries(ICONS).map(([key, Icon]) => (
+                    <button
+                      key={key}
+                      onClick={() => updateSelectedNode({ icon: key })}
+                      className={`flex h-10 items-center justify-center rounded-lg border ${
+                        (selectedNode.data.icon || selectedNode.data.device.device_type) === key
+                          ? "border-slate-950 bg-slate-950 text-white"
+                          : "border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-50">
+                <div className="text-xs text-slate-400">
+                  <div className="flex justify-between py-1">
+                    <span>IP Address</span>
+                    <span className="font-mono">{selectedNode.data.device.ip}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span>MAC</span>
+                    <span className="font-mono text-[9px] uppercase">{selectedNode.data.device.mac || "Unknown"}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span>Status</span>
+                    <span className={selectedNode.data.device.status === "online" ? "text-emerald-600" : "text-rose-600"}>
+                      {selectedNode.data.device.status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : selectedEdge ? (
             <div className="space-y-6">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Link Type</label>
@@ -222,7 +396,7 @@ export default function TopologyPage() {
                   ))}
                 </div>
               </div>
-
+              
               <div className="pt-6 border-t border-slate-100">
                 <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
                   <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
@@ -234,9 +408,9 @@ export default function TopologyPage() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-6">
-              <Share2 className="h-10 w-10 mb-4 opacity-20" />
-              <p>Select a connection line on the map to change its link type.</p>
+            <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-4">
+              <Share2 className="h-10 w-10 mb-3 opacity-20" />
+              <p>Select a node or connection line on the map to edit its properties.</p>
             </div>
           )}
         </div>
