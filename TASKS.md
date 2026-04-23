@@ -9,7 +9,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 ## Phase 2 - Device Scanning And Inventory
 
 - [ ] `scan-nmap-mvp`: Harden nmap discovery and quick/full scan modes.
-- [ ] `device-identity-merge`: Improve MAC-first identity matching and IP-change handling.
+- [/] `device-identity-merge`: Improve MAC-first identity matching and IP-change handling.
 - [ ] `device-type-heuristics`: Expand home-device type guessing rules and make them configurable.
 - [ ] `scan-error-ui`: Show scan errors and permission hints clearly in the dashboard.
 
