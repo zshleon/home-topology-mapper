@@ -131,7 +131,7 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
             </button>
           </div>
           <div className="space-y-3">
-            {scans.slice(0, 5).map((scan) => (
+            {scans.slice(0, 4).map((scan) => (
               <div 
                 key={scan.id} 
                 className={`rounded-lg border p-3 ${scan.error ? "border-rose-100 bg-rose-50/30" : "border-slate-100"}`}
@@ -144,9 +144,14 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
                     </span>
                   )}
                 </div>
-                <p className={`text-sm mt-1 ${scan.error ? "text-rose-600" : "text-slate-500"}`}>
-                  {scan.error ? (scan.error.split("|")[1]?.replace("HINT:", "").trim() || scan.error) : (scan.result_summary || "No summary")}
+                <p className={`text-sm mt-1 whitespace-pre-line ${scan.error ? "text-rose-600" : "text-slate-500"}`}>
+                  {scan.result_summary || scan.error || "No summary yet"}
                 </p>
+                {scan.error_hint && (
+                  <p className="mt-1 text-xs text-rose-500 italic">
+                    Hint: {scan.error_hint}
+                  </p>
+                )}
               </div>
             ))}
             {scans.length === 0 && <p className="text-sm text-slate-500">No scans yet.</p>}

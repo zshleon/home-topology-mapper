@@ -8,7 +8,7 @@ from app.db.session import get_session
 from app.models import Device, DeviceStatus, ScanRecord
 from app.schemas import ScanRecordRead, ScanStartRequest
 from app.services.inventory import upsert_scanned_devices
-from app.services.scanner import scan_subnet
+from app.services.scanner import ScanError, normalize_scan_mode, scan_subnet
 from app.services.topology import ensure_topology_for_devices, mark_offline_devices
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
@@ -25,7 +25,7 @@ def start_scan(
     session: Session = Depends(get_session),
 ) -> ScanRecord:
     subnet = payload.subnet or settings.subnet_list[0]
-    mode = payload.mode or settings.scan_mode
+    mode = normalize_scan_mode(payload.mode or settings.scan_mode)
     record = ScanRecord(subnet=subnet, scan_mode=mode)
     session.add(record)
     session.commit()
@@ -45,25 +45,27 @@ def start_scan(
             f"discovered={len(scanned)}, new={new_count}, online={record.online_count}, "
             f"marked_offline={offline_count}"
         )
-    except Exception as exc:
-        error_msg = str(exc)
-        hint = "An unexpected error occurred during scanning."
-        
-        if "nmap is not installed" in error_msg:
-            hint = "Nmap is missing. Please install it in the container (e.g., apk add nmap or apt-get install nmap)."
-        elif "Operation not permitted" in error_msg or "NET_RAW" in error_msg:
-            hint = "Permission denied. Nmap requires root or NET_RAW capabilities. In LXC/Docker, check host networking or privileged mode."
-        elif "timed out" in error_msg.lower():
-            hint = "Scan timed out. The network might be too large or slow. Try a smaller range or 'quick' mode."
-        elif "failed" in error_msg.lower():
-            hint = "Scan failed. Check if the target subnet is reachable from this host."
-
-        record.error = f"{error_msg} | HINT: {hint}"
+    except ScanError as exc:
+        record.error = str(exc)
+        record.error_hint = exc.hint
         session.add(record)
         session.commit()
         raise HTTPException(
-            status_code=500, 
-            detail={"message": error_msg, "hint": hint}
+            status_code=500,
+            detail={
+                "code": exc.code,
+                "message": str(exc),
+                "hint": exc.hint,
+            },
+        ) from exc
+    except Exception as exc:
+        record.error = str(exc)
+        record.error_hint = "An unexpected error occurred. Check backend logs for details."
+        session.add(record)
+        session.commit()
+        raise HTTPException(
+            status_code=500,
+            detail={"message": str(exc), "hint": record.error_hint},
         ) from exc
     finally:
         record.finished_at = datetime.now(UTC)
@@ -71,4 +73,3 @@ def start_scan(
         session.commit()
         session.refresh(record)
     return record
-
