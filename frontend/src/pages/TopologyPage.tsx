@@ -13,9 +13,23 @@ import { Save, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
-function nodeStyle(status: string, isNew: boolean) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isStale: boolean) {
   if (status === "offline") {
-    return { opacity: 0.45, border: "1px solid #cbd5e1", background: "#f8fafc" };
+    return { 
+      opacity: isStale ? 0.25 : 0.45, 
+      border: isStale ? "1px dashed #94a3b8" : "1px solid #cbd5e1", 
+      background: isStale ? "#f1f5f9" : "#f8fafc",
+      filter: isStale ? "grayscale(100%)" : "none",
+    };
+  }
+  if (isUnclassified) {
+    return { 
+      border: "2px dashed #0891b2", 
+      background: "#ecfeff",
+      borderRadius: "12px",
+    };
   }
   if (isNew) {
     return { border: "2px solid #06b6d4", background: "#ecfeff" };
@@ -25,30 +39,42 @@ function nodeStyle(status: string, isNew: boolean) {
 
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
+  const [retentionDays, setRetentionDays] = useState(30);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const data = await api.topology();
+    const [data, config] = await Promise.all([api.topology(), api.config()]);
     setTopology(data);
+    setRetentionDays(config.offline_retention_days);
+    const now = Date.now();
     const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
+      const isUnclassified = node.x < -100;
+      const offlineAge = now - Date.parse(node.device.last_seen);
+      const isStale = node.device.status === "offline" && offlineAge > (config.offline_retention_days * MS_PER_DAY);
+
       const title = node.custom_label || node.device.hostname || node.device.ip;
       return {
         id: node.device_id,
         position: { x: node.x, y: node.y },
         data: {
           label: (
-            <div className="min-w-[150px]">
+            <div className="relative min-w-[150px] p-1">
+              {(isUnclassified || isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {isStale ? "Stale / Offline" : "New / Unclassified"}
+                </div>
+              )}
               <div className="font-semibold">{title}</div>
               <div className="font-mono text-xs text-slate-500">{node.device.ip}</div>
-              <div className="mt-1 text-xs text-slate-500">{node.device.device_type}</div>
+              <div className="mt-1 text-xs text-slate-500 uppercase">{node.device.device_type}</div>
             </div>
           )
         },
-        style: nodeStyle(node.device.status, isNew)
+        style: nodeStyle(node.device.status, isNew, isUnclassified, isStale)
       };
     });
     const flowEdges: Edge[] = data.edges.map((edge) => ({

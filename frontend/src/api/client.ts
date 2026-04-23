@@ -24,6 +24,7 @@ export const api = {
     request<ScanRecord>("/api/scans", { method: "POST", body: JSON.stringify(payload) }),
   topology: () => request<Topology>("/api/topology"),
   saveTopology: (payload: unknown) =>
-    request<Topology>("/api/topology", { method: "PUT", body: JSON.stringify(payload) })
+    request<Topology>("/api/topology", { method: "PUT", body: JSON.stringify(payload) }),
+  config: () => request<{ offline_retention_days: number }>("/api/config")
 };
 
