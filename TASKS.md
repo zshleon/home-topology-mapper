@@ -30,5 +30,4 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 - [ ] `lxc-permission-checks`: Add startup diagnostics for nmap, NET_RAW, host networking, and subnet reachability.
 - [ ] `compose-production-polish`: Add healthcheck, labels, and documented env vars.
-- [ ] `release-template`: Add GitHub release checklist and versioning.
-
+- [x] `release-template`: Add GitHub release checklist and versioning.

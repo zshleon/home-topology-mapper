@@ -1,0 +1,24 @@
+name: Task
+description: Track a concrete engineering task.
+title: "chore: "
+labels: ["task"]
+body:
+  - type: input
+    id: task
+    attributes:
+      label: TASKS.md item
+      placeholder: scan-nmap-mvp
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: Deliverables
+      placeholder: List the expected files or behavior changes.
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Checks
+      placeholder: How should this be verified?
