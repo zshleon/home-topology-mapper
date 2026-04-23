@@ -14,10 +14,23 @@ def now_utc() -> datetime:
 
 def find_existing_device(session: Session, scanned: ScannedDevice) -> Device | None:
     if scanned.mac:
-        device = session.exec(select(Device).where(Device.mac == scanned.mac)).first()
-        if device:
-            return device
-    return session.exec(select(Device).where(Device.ip == scanned.ip)).first()
+        # 1. Highest priority: Match by MAC
+        device_by_mac = session.exec(select(Device).where(Device.mac == scanned.mac)).first()
+        if device_by_mac:
+            return device_by_mac
+
+        # 2. Safe Fallback: Match by IP ONLY if the existing record has no MAC.
+        # This prevents duplication when a previously "MAC-less" device finally provides a MAC.
+        device_by_ip = session.exec(select(Device).where(Device.ip == scanned.ip)).first()
+        if device_by_ip and device_by_ip.mac is None:
+            return device_by_ip
+        return None
+
+    # 3. No MAC provided in scan result -> use IP matching
+    # Prioritize active/online records to avoid hitting stale offline history
+    statement = select(Device).where(Device.ip == scanned.ip)
+    # DeviceStatus.online ("online") sorts after DeviceStatus.offline ("offline")
+    return session.exec(statement.order_by(Device.status.desc())).first()
 
 
 def upsert_scanned_devices(session: Session, scanned_devices: list[ScannedDevice]) -> tuple[set[str], int]:
@@ -27,6 +40,15 @@ def upsert_scanned_devices(session: Session, scanned_devices: list[ScannedDevice
     for scanned in scanned_devices:
         device = find_existing_device(session, scanned)
         if device is None:
+            # IP Squatter check: if this IP is taken by another online device, mark it offline
+            # This handles the case where a new MAC appears on an existing IP
+            squatter = session.exec(
+                select(Device).where(Device.ip == scanned.ip, Device.status == DeviceStatus.online)
+            ).first()
+            if squatter:
+                squatter.status = DeviceStatus.offline
+                session.add(squatter)
+
             device = Device(
                 ip=scanned.ip,
                 mac=scanned.mac,
@@ -39,6 +61,20 @@ def upsert_scanned_devices(session: Session, scanned_devices: list[ScannedDevice
             )
             new_count += 1
         else:
+            # Handle IP change: if an existing device (found by MAC) moved to a new IP,
+            # mark any other device currently online at the new IP as offline
+            if device.ip != scanned.ip:
+                squatter = session.exec(
+                    select(Device).where(
+                        Device.ip == scanned.ip,
+                        Device.id != device.id,
+                        Device.status == DeviceStatus.online,
+                    )
+                ).first()
+                if squatter:
+                    squatter.status = DeviceStatus.offline
+                    session.add(squatter)
+
             device.ip = scanned.ip
             device.mac = scanned.mac or device.mac
             device.hostname = scanned.hostname or device.hostname

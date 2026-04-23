@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { GitFork, Radar, RefreshCw } from "lucide-react";
+import { AlertCircle, AlertTriangle, GitFork, Radar, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
 import type { Device, ScanRecord } from "../types";
 
@@ -13,16 +13,22 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
   const [subnet, setSubnet] = useState("");
   const [mode, setMode] = useState("quick");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
+  const [diagnostics, setDiagnostics] = useState<{ checks: any[] } | null>(null);
 
   const refresh = async () => {
-    const [deviceData, scanData] = await Promise.all([api.devices(), api.scans()]);
+    const [deviceData, scanData, diagData] = await Promise.all([
+      api.devices(),
+      api.scans(),
+      api.diagnostics().catch(() => null)
+    ]);
     setDevices(deviceData);
     setScans(scanData);
+    setDiagnostics(diagData);
   };
 
   useEffect(() => {
-    refresh().catch((err) => setError(String(err)));
+    refresh().catch((err) => setError({ message: String(err) }));
   }, []);
 
   const stats = useMemo(() => {
@@ -39,7 +45,10 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
       await api.startScan({ subnet: subnet || undefined, mode });
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError({ 
+        message: err instanceof Error ? err.message : String(err),
+        hint: (err as any).hint
+      });
     } finally {
       setLoading(false);
     }
@@ -57,6 +66,23 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
           </p>
         </div>
       </section>
+
+      {diagnostics?.checks.some(c => c.status === "error") && (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-rose-800 shadow-soft">
+          <div className="flex items-center gap-3 font-semibold text-lg">
+            <AlertCircle className="h-6 w-6 text-rose-600" />
+            LXC / System Permission Required
+          </div>
+          <div className="mt-3 space-y-3 text-sm opacity-90">
+            {diagnostics.checks.filter(c => c.status === "error").map(check => (
+              <div key={check.id} className="flex flex-col gap-1">
+                <p><span className="font-bold underline decoration-rose-300 underline-offset-4">{check.name}</span>: {check.message}</p>
+                <p className="pl-4 border-l-2 border-rose-200 text-rose-600 font-mono text-xs">{check.hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <section className="grid gap-4 md:grid-cols-4">
         {[
@@ -102,7 +128,21 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
               {loading ? "Scanning" : "Scan"}
             </button>
           </div>
-          {error && <p className="mt-3 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{error}</p>}
+          {error && (
+            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-600" />
+                <div>
+                  <p className="font-semibold text-rose-800">{error.message}</p>
+                  {error.hint && (
+                    <p className="mt-1 text-sm text-rose-700 leading-relaxed">
+                      <span className="font-medium">Hint:</span> {error.hint}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
@@ -115,9 +155,26 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
           </div>
           <div className="space-y-3">
             {scans.slice(0, 4).map((scan) => (
-              <div key={scan.id} className="rounded-lg border border-slate-100 p-3">
-                <p className="font-medium">{scan.subnet}</p>
-                <p className="text-sm text-slate-500">{scan.result_summary || scan.error || "No summary yet"}</p>
+              <div 
+                key={scan.id} 
+                className={`rounded-lg border p-3 ${scan.error ? "border-rose-100 bg-rose-50/30" : "border-slate-100"}`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{scan.subnet}</p>
+                  {scan.error && (
+                    <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-rose-700">
+                      Failed
+                    </span>
+                  )}
+                </div>
+                <p className={`text-sm mt-1 whitespace-pre-line ${scan.error ? "text-rose-600" : "text-slate-500"}`}>
+                  {scan.result_summary || scan.error || "No summary yet"}
+                </p>
+                {scan.error_hint && (
+                  <p className="mt-1 text-xs text-rose-500 italic">
+                    Hint: {scan.error_hint}
+                  </p>
+                )}
               </div>
             ))}
             {scans.length === 0 && <p className="text-sm text-slate-500">No scans yet.</p>}
