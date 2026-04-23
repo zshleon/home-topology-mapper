@@ -1,0 +1,25 @@
+## Task
+Closes or implements: `device-identity-merge`
+
+## Summary
+Improved the device identity logic to prioritize MAC addresses and handle IP conflicts more gracefully.
+
+## Changes
+- Refactored `find_existing_device` in `inventory.py` to use a MAC-first matching strategy.
+- Added logic to prevent IP-only matching from hijacking devices that already have a different MAC assigned.
+- Implemented an IP conflict resolution step in `upsert_scanned_devices`: if a device moves to an IP currently 'held' by another device in the database, the old owner is marked as offline.
+- Added `backend/tests/test_inventory.py` with 3 test cases covering these scenarios.
+
+## Test Plan
+- [x] Backend checks run (`python -m compileall app` passed)
+- [x] Frontend build run (`npm run build` passed)
+- [x] Backend tests passed (`pytest tests/test_inventory.py` 3 passed)
+- [x] Manual UI check: Verified that manual topology protection is preserved.
+
+## Compatibility
+- [x] Does not overwrite manual topology edges
+- [x] Does not require database migration
+- [x] Does not change Docker/LXC permissions
+
+## Notes
+The new logic ensures that MAC addresses are treated as the 'source of truth'. If nmap fails to get a MAC, it falls back to IP-based identification.

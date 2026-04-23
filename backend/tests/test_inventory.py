@@ -1,5 +1,5 @@
 import pytest
-from sqlmodel import Session, create_engine, SQLModel
+from sqlmodel import Session, create_engine, SQLModel, select
 from app.models import Device, DeviceStatus, DeviceType
 from app.services.inventory import find_existing_device, upsert_scanned_devices
 from app.services.scanner import ScannedDevice
@@ -33,12 +33,13 @@ def test_find_existing_device_by_ip_fallback(session: Session):
     session.add(device)
     session.commit()
 
-    # Scan with same IP, now has MAC
+    # Scan with same IP, now has MAC. 
+    # Tightened logic: IP fallback ONLY happens if scanned.mac is None.
+    # So this should NOT find the existing no-mac device.
     scanned = ScannedDevice(ip=ip, mac="11:22:33:44:55:66")
     found = find_existing_device(session, scanned)
     
-    assert found is not None
-    assert found.id == device.id
+    assert found is None
 
 def test_ip_conflict_handling(session: Session):
     # Device A: MAC_A, IP_1
@@ -60,6 +61,41 @@ def test_ip_conflict_handling(session: Session):
     session.refresh(device_b)
     
     assert device_a.ip == "10.0.0.2"
-    # Current behavior: device_b still has IP 10.0.0.2
-    # We want Device B to be marked offline or handle the conflict
     assert device_b.status == DeviceStatus.offline
+
+def test_new_mac_hijacks_ip(session: Session):
+    # Device A: MAC_A, IP_1 (Online)
+    ip = "10.0.0.10"
+    device_a = Device(ip=ip, mac="aa:aa", hostname="OldDevice", status=DeviceStatus.online)
+    session.add(device_a)
+    session.commit()
+
+    # Scan finds NEW_MAC with SAME IP
+    scanned = [ScannedDevice(ip=ip, mac="bb:bb", hostname="NewDevice")]
+    seen_ids, new_count = upsert_scanned_devices(session, scanned)
+
+    session.refresh(device_a)
+    assert device_a.status == DeviceStatus.offline
+    
+    # Verify new device is created and online
+    new_device = session.exec(select(Device).where(Device.mac == "bb:bb")).first()
+    assert new_device is not None
+    assert new_device.status == DeviceStatus.online
+    assert new_device.ip == ip
+
+def test_ip_fallback_prioritizes_online(session: Session):
+    # Setup: Two records with same IP, one offline (stale), one online
+    ip = "10.0.0.20"
+    stale_device = Device(ip=ip, mac=None, hostname="Stale", status=DeviceStatus.offline)
+    active_device = Device(ip=ip, mac=None, hostname="Active", status=DeviceStatus.online)
+    session.add(stale_device)
+    session.add(active_device)
+    session.commit()
+
+    # Scan with same IP, NO MAC
+    scanned = ScannedDevice(ip=ip, mac=None)
+    found = find_existing_device(session, scanned)
+
+    assert found is not None
+    assert found.id == active_device.id
+    assert found.hostname == "Active"
