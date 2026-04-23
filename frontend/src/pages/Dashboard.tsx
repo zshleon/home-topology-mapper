@@ -117,7 +117,8 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
             {scans.slice(0, 4).map((scan) => (
               <div key={scan.id} className="rounded-lg border border-slate-100 p-3">
                 <p className="font-medium">{scan.subnet}</p>
-                <p className="text-sm text-slate-500">{scan.result_summary || scan.error || "No summary yet"}</p>
+                <p className="text-sm text-slate-500 whitespace-pre-line">{scan.result_summary || scan.error || "No summary yet"}</p>
+                {scan.error_hint && <p className="mt-1 text-xs text-slate-400 whitespace-pre-line">{scan.error_hint}</p>}
               </div>
             ))}
             {scans.length === 0 && <p className="text-sm text-slate-500">No scans yet.</p>}
