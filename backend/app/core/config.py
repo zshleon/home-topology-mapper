@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./data/home-topology.db"
     scan_subnets: str = "192.168.1.0/24"
     scan_mode: str = "quick"
+    offline_retention_days: int = 30
     static_dir: Path = Path("static")
 
     model_config = SettingsConfigDict(env_prefix="HTM_", env_file=".env", extra="ignore")
