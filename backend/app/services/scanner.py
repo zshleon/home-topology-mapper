@@ -138,7 +138,7 @@ HEURISTICS = [
     {"type": DeviceType.tablet, "is_node": False, "hostname": ["ipad", "tablet"]},
     {"type": DeviceType.pc, "is_node": False, "ports_any": [3389, 5900]},
     {"type": DeviceType.pc, "is_node": False, "hostname": ["desktop", "laptop", "pc-", "-pc", "macbook", "workstation"]},
-    {"type": DeviceType.pc, "is_node": False, "vendor": ["apple", "dell", "hp", "lenovo", "asus"]},
+    {"type": DeviceType.pc, "is_node": False, "vendor": ["dell", "hp", "lenovo", "asus"]},
 
     # Printers & Fallback
     {"type": DeviceType.printer, "is_node": False, "ports_any": [631, 9100]},

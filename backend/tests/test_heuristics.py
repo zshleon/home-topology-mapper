@@ -13,6 +13,10 @@ from app.services.scanner import ScannedDevice, _guess_type
     ("storage", None, [2049], "192.168.1.30", DeviceType.nas, False),
     # Phone by iOS service port
     (None, "Apple", [62078], "192.168.1.40", DeviceType.phone, False),
+    # PC by MacBook hostname
+    ("my-macbook", "Apple", [], "192.168.1.45", DeviceType.pc, False),
+    # Generic Apple device (no other signals) -> Unknown (Refined behavior)
+    (None, "Apple", [], "192.168.1.46", DeviceType.unknown, False),
     # Camera by hostname
     ("ipc-garden", "Dahua", [80], "192.168.1.50", DeviceType.camera, False),
     # IoT by hostname
