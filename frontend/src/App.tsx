@@ -14,6 +14,7 @@ const navItems: Array<{ id: Page; label: string; icon: ComponentType<{ className
 
 export default function App() {
   const [page, setPage] = useState<Page>("dashboard");
+  const isTopology = page === "topology";
 
   return (
     <div className="min-h-screen">
@@ -45,7 +46,7 @@ export default function App() {
         </nav>
       </aside>
       <main className="lg:pl-64">
-        <div className="mx-auto max-w-7xl px-5 py-6">
+        <div className={isTopology ? "px-4 py-4 lg:px-6" : "mx-auto max-w-7xl px-5 py-6"}>
           <div className="mb-5 flex gap-2 overflow-x-auto lg:hidden">
             {navItems.map((item) => (
               <button
