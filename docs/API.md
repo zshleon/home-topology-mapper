@@ -13,6 +13,13 @@
 
 Returns a `ScanRecord`.
 
+Accepted scan modes:
+
+- `quick`: common home-homelab ports only
+- `full`: scan all TCP ports, slower but more exhaustive
+
+On failure, the scan history record also stores `error_hint` for operator guidance.
+
 ## Scan History
 
 `GET /api/scans`
@@ -71,4 +78,3 @@ Returns nodes with embedded device records and edges.
   ]
 }
 ```
-

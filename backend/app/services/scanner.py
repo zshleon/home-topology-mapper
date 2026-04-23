@@ -5,8 +5,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-
-from app.models import DeviceType
+from app.models import DeviceType, ScanMode
 
 
 QUICK_PORTS = [
@@ -35,6 +34,63 @@ QUICK_PORTS = [
 ]
 
 
+class ScanError(RuntimeError):
+    def __init__(self, code: str, message: str, hint: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.hint = hint
+
+
+def normalize_scan_mode(mode: str | ScanMode | None) -> ScanMode:
+    if isinstance(mode, ScanMode):
+        normalized = mode.value
+    else:
+        normalized = str(mode or ScanMode.quick.value).strip().lower()
+    if normalized not in {ScanMode.quick.value, ScanMode.full.value}:
+        raise ScanError(
+            "invalid_scan_mode",
+            f"Unsupported scan mode '{mode}'.",
+            "Choose either 'quick' or 'full'.",
+        )
+    return ScanMode(normalized)
+
+
+def _build_discovery_args(subnet: str) -> list[str]:
+    return ["-n", "-sn", subnet, "-oX", "-"]
+
+
+def _build_port_scan_args(mode: ScanMode, ips: list[str]) -> tuple[list[str], int]:
+    if mode == ScanMode.full:
+        return (
+            [
+                "-n",
+                "-Pn",
+                "-p-",
+                "--open",
+                "--max-retries",
+                "1",
+                "--min-rate",
+                "1500",
+                *ips,
+            ],
+            900,
+        )
+
+    return (
+        [
+            "-n",
+            "-Pn",
+            "-p",
+            ",".join(str(port) for port in QUICK_PORTS),
+            "--open",
+            "--max-retries",
+            "1",
+            *ips,
+        ],
+        240,
+    )
+
+
 @dataclass
 class ScannedDevice:
     ip: str
@@ -49,22 +105,57 @@ class ScannedDevice:
 
 def _run_nmap(args: list[str], timeout: int = 180) -> str:
     if shutil.which("nmap") is None:
-        raise RuntimeError("nmap is not installed in this container")
-    proc = subprocess.run(
-        ["nmap", *args],
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        timeout=timeout,
-        check=False,
-    )
+        raise ScanError(
+            "nmap_missing",
+            "nmap is not installed in this container.",
+            "Install nmap inside the LXC or Docker image before scanning.",
+        )
+    try:
+        proc = subprocess.run(
+            ["nmap", *args],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ScanError(
+            "scan_timeout",
+            f"nmap timed out after {timeout} seconds.",
+            "Try quick mode first or narrow the subnet.",
+        ) from exc
+    stderr = proc.stderr.strip()
+    lower = stderr.lower()
+    if (
+        "requires root privileges" in lower
+        or "requires root" in lower
+        or "operation not permitted" in lower
+        or "raw sockets" in lower
+    ):
+        raise ScanError(
+            "permission_denied",
+            "nmap needs raw network privileges in this container.",
+            "Run the container with host networking and NET_RAW, then retry the scan.",
+        )
     if proc.returncode not in (0, 1):
-        raise RuntimeError(proc.stderr.strip() or "nmap failed")
+        raise ScanError(
+            "nmap_failed",
+            stderr or "nmap failed",
+            "Check the subnet, container networking, and nmap permissions.",
+        )
     return proc.stdout
 
 
 def _parse_discovery(xml_text: str) -> list[ScannedDevice]:
-    root = ET.fromstring(xml_text)
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise ScanError(
+            "invalid_nmap_output",
+            "nmap discovery output could not be parsed.",
+            "Check that nmap is producing XML output and the target subnet is reachable.",
+        ) from exc
     devices: list[ScannedDevice] = []
     for host in root.findall("host"):
         status = host.find("status")
@@ -87,7 +178,14 @@ def _parse_discovery(xml_text: str) -> list[ScannedDevice]:
 
 
 def _parse_ports(xml_text: str) -> dict[str, list[int]]:
-    root = ET.fromstring(xml_text)
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as exc:
+        raise ScanError(
+            "invalid_nmap_output",
+            "nmap port scan output could not be parsed.",
+            "Try quick mode or reduce the subnet size.",
+        ) from exc
     by_ip: dict[str, list[int]] = {}
     for host in root.findall("host"):
         ipv4 = host.find("address[@addrtype='ipv4']")
@@ -129,25 +227,20 @@ def _guess_type(device: ScannedDevice, subnet: str) -> tuple[DeviceType, bool]:
     return DeviceType.unknown, False
 
 
-def scan_subnet(subnet: str, mode: str = "quick") -> list[ScannedDevice]:
-    ipaddress.ip_network(subnet, strict=False)
-    discovery_xml = _run_nmap(["-sn", subnet, "-oX", "-"], timeout=180)
+def scan_subnet(subnet: str, mode: str | ScanMode = ScanMode.quick) -> list[ScannedDevice]:
+    network = ipaddress.ip_network(subnet, strict=False)
+    scan_mode = normalize_scan_mode(mode)
+    discovery_xml = _run_nmap(_build_discovery_args(network.with_prefixlen), timeout=180)
     devices = _parse_discovery(discovery_xml)
     if not devices:
         return []
 
     ips = [device.ip for device in devices]
-    if mode == "full":
-        port_args = ["-Pn", "-p-", "--open", "--max-retries", "1", "--min-rate", "1500"]
-        timeout = 900
-    else:
-        port_args = ["-Pn", "-p", ",".join(str(port) for port in QUICK_PORTS), "--open"]
-        timeout = 240
-    port_xml = _run_nmap([*port_args, "-oX", "-", *ips], timeout=timeout)
+    port_args, timeout = _build_port_scan_args(scan_mode, ips)
+    port_xml = _run_nmap([*port_args, "-oX", "-"], timeout=timeout)
     ports_by_ip = _parse_ports(port_xml)
 
     for device in devices:
         device.ports = ports_by_ip.get(device.ip, [])
         device.device_type, device.is_network_node = _guess_type(device, subnet)
     return devices
-
