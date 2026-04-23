@@ -1,0 +1,19 @@
+services:
+  home-topology-mapper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: home-topology-mapper
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      HTM_DATABASE_URL: sqlite:////data/home-topology.db
+      HTM_SCAN_SUBNETS: ${HTM_SCAN_SUBNETS:-192.168.1.0/24}
+      HTM_SCAN_MODE: ${HTM_SCAN_MODE:-quick}
+      HTM_STATIC_DIR: /app/static
+    volumes:
+      - ./data:/data
+
