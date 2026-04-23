@@ -28,18 +28,34 @@ def initial_position(index: int, total: int, is_network_node: bool) -> tuple[flo
 
 def ensure_topology_for_devices(session: Session) -> None:
     devices = session.exec(select(Device).order_by(Device.ip)).all()
-    existing_nodes = {node.device_id: node for node in session.exec(select(TopologyNode)).all()}
+    # Get all current nodes to detect if this is an incremental discovery
+    all_nodes = session.exec(select(TopologyNode)).all()
+    existing_device_ids = {node.device_id for node in all_nodes}
+    is_incremental = len(existing_device_ids) > 0
 
     network_index = 0
     endpoint_index = 0
-    for device in sorted(devices, key=lambda item: ip_key(item.ip)):
-        if device.id not in existing_nodes:
-            if device.is_network_node:
-                x, y = initial_position(network_index, len(devices), True)
-                network_index += 1
+    new_discovery_index = 0
+
+    # Stable sort to keep initial indices consistent
+    sorted_devices = sorted(devices, key=lambda item: ip_key(item.ip))
+
+    for device in sorted_devices:
+        if device.id not in existing_device_ids:
+            if is_incremental:
+                # NEW DEVICE BIN: Column on the left (negative X)
+                x = -400
+                y = 120 + new_discovery_index * 160
+                new_discovery_index += 1
             else:
-                x, y = initial_position(endpoint_index, len(devices), False)
-                endpoint_index += 1
+                # First scan: Use normal grid/row layout
+                if device.is_network_node:
+                    x, y = initial_position(network_index, len(devices), True)
+                    network_index += 1
+                else:
+                    x, y = initial_position(endpoint_index, len(devices), False)
+                    endpoint_index += 1
+            
             session.add(TopologyNode(device_id=device.id, x=x, y=y, pinned=False))
 
     session.flush()
