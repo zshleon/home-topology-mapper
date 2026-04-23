@@ -41,6 +41,21 @@ The default `docker-compose.yml` already does this.
 - Offline devices are dimmed
 - Scan failures keep a human-readable hint in the history record
 
+## Deployment
+
+### Docker Compose (Recommended)
+1. Copy `.env.example` to `.env` and adjust your `HTM_SCAN_SUBNETS`.
+2. Run `docker compose up -d`.
+3. Access at `http://<your-ip>:8080`.
+
+### Proxmox LXC Tips
+- Use **Host Networking** (`network_mode: host` in Compose) so nmap can see the local broadcast domain.
+- If using an unprivileged container, ensure you enable **Nesting** and add the **NET_RAW** capability in the LXC config file (on the PVE host):
+  ```text
+  lxc.cap.keep: net_raw
+  ```
+- Alternatively, run as a privileged container for full nmap capability (OS detection, etc.).
+
 ## Development
 
 Start with `TASKS.md` and keep one task per branch.

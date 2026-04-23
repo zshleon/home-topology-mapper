@@ -28,6 +28,6 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 5 - Docker And LXC Fit
 
-- [/] `lxc-permission-checks`: Add startup diagnostics for nmap, NET_RAW, host networking, and subnet reachability.
-- [ ] `compose-production-polish`: Add healthcheck, labels, and documented env vars.
+- [x] `lxc-permission-checks`: Add startup diagnostics for nmap, NET_RAW, host networking, and subnet reachability.
+- [/] `compose-production-polish`: Add healthcheck, labels, and documented env vars.
 - [x] `release-template`: Add GitHub release checklist and versioning.
