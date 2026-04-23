@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.models import DeviceStatus, DeviceType, EdgeConfidence, LinkType
+from app.models import DeviceStatus, DeviceType, EdgeConfidence, LinkType, ScanMode
 
 
 class DeviceRead(BaseModel):
@@ -29,7 +29,7 @@ class DeviceUpdate(BaseModel):
 
 class ScanStartRequest(BaseModel):
     subnet: str | None = Field(default=None, examples=["192.168.1.0/24"])
-    mode: str | None = Field(default=None, examples=["quick", "full"])
+    mode: ScanMode | None = Field(default=None, examples=["quick", "full"])
 
 
 class ScanRecordRead(BaseModel):
@@ -37,13 +37,14 @@ class ScanRecordRead(BaseModel):
     started_at: datetime
     finished_at: datetime | None
     subnet: str
-    scan_mode: str
+    scan_mode: ScanMode
     result_summary: str | None
     discovered_count: int
     new_count: int
     online_count: int
     offline_count: int
     error: str | None
+    error_hint: str | None
 
 
 class TopologyNodeRead(BaseModel):
@@ -93,4 +94,3 @@ class TopologyRead(BaseModel):
 class TopologyWrite(BaseModel):
     nodes: list[TopologyNodeWrite]
     edges: list[TopologyEdgeWrite]
-

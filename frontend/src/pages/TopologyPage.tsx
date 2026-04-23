@@ -39,22 +39,30 @@ function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isSt
 
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
-  const [retentionDays, setRetentionDays] = useState(30);
+  const [config, setConfig] = useState<{ offline_retention_days: number } | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [data, config] = await Promise.all([api.topology(), api.config()]);
+    // Note: api.config() is expected to be available from the offline-device-policy branch logic
+    const [data, configData] = await Promise.all([
+      api.topology(), 
+      (api as any).config ? (api as any).config() : Promise.resolve({ offline_retention_days: 30 })
+    ]);
     setTopology(data);
-    setRetentionDays(config.offline_retention_days);
+    setConfig(configData);
+    
     const now = Date.now();
+    const retentionDays = configData.offline_retention_days;
+    
     const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
       const isUnclassified = node.x < -100;
       const offlineAge = now - Date.parse(node.device.last_seen);
-      const isStale = node.device.status === "offline" && offlineAge > (config.offline_retention_days * MS_PER_DAY);
+      const isStale = node.device.status === "offline" && offlineAge > (retentionDays * MS_PER_DAY);
 
       const title = node.custom_label || node.device.hostname || node.device.ip;
       return {
@@ -77,6 +85,7 @@ export default function TopologyPage() {
         style: nodeStyle(node.device.status, isNew, isUnclassified, isStale)
       };
     });
+    
     const flowEdges: Edge[] = data.edges.map((edge) => ({
       id: edge.id,
       source: edge.from_device_id,
@@ -85,6 +94,7 @@ export default function TopologyPage() {
       label: edge.confirmed_by_user ? "manual" : "auto",
       style: { stroke: edge.confirmed_by_user ? "#111827" : "#94a3b8" }
     }));
+    
     setNodes(flowNodes);
     setEdges(flowEdges);
   }, [setEdges, setNodes]);

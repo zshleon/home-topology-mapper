@@ -8,10 +8,10 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 2 - Device Scanning And Inventory
 
-- [ ] `scan-nmap-mvp`: Harden nmap discovery and quick/full scan modes.
-- [ ] `device-identity-merge`: Improve MAC-first identity matching and IP-change handling.
-- [ ] `device-type-heuristics`: Expand home-device type guessing rules and make them configurable.
-- [ ] `scan-error-ui`: Show scan errors and permission hints clearly in the dashboard.
+- [x] `scan-nmap-mvp`: Harden nmap discovery and quick/full scan modes.
+- [x] `device-identity-merge`: Improve MAC-first identity matching and IP-change handling.
+- [x] `device-type-heuristics`: Expand home-device type guessing rules and make them configurable.
+- [x] `scan-error-ui`: Show scan errors and permission hints clearly in the dashboard.
 
 ## Phase 3 - Topology Editor
 
@@ -22,8 +22,8 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 4 - Persistence And Incremental Scans
 
-- [ ] `preserve-manual-edges`: Add tests proving scans cannot overwrite confirmed manual edges.
-- [ ] `new-device-bin`: Place newly discovered devices in a visible unclassified area.
+- [x] `preserve-manual-edges`: Add tests proving scans cannot overwrite confirmed manual edges.
+- [x] `new-device-bin`: Place newly discovered devices in a visible unclassified area.
 - [/] `offline-device-policy`: Add configurable offline retention and visual style.
 
 ## Phase 5 - Docker And LXC Fit

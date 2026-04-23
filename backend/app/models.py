@@ -45,6 +45,11 @@ class LinkType(str, Enum):
     unknown = "unknown"
 
 
+class ScanMode(str, Enum):
+    quick = "quick"
+    full = "full"
+
+
 class Device(SQLModel, table=True):
     id: str = Field(default_factory=new_id, primary_key=True)
     ip: str = Field(index=True)
@@ -90,11 +95,11 @@ class ScanRecord(SQLModel, table=True):
     started_at: datetime = Field(default_factory=now_utc, index=True)
     finished_at: datetime | None = Field(default=None, index=True)
     subnet: str
-    scan_mode: str = "quick"
+    scan_mode: ScanMode = Field(default=ScanMode.quick, index=True)
     result_summary: str | None = None
     discovered_count: int = 0
     new_count: int = 0
     online_count: int = 0
     offline_count: int = 0
     error: str | None = None
-
+    error_hint: str | None = None
