@@ -34,13 +34,14 @@ export interface ScanRecord {
   started_at: string;
   finished_at: string | null;
   subnet: string;
-  scan_mode: string;
+  scan_mode: "quick" | "full";
   result_summary: string | null;
   discovered_count: number;
   new_count: number;
   online_count: number;
   offline_count: number;
   error: string | null;
+  error_hint: string | null;
 }
 
 export interface TopologyNode {
@@ -67,4 +68,3 @@ export interface Topology {
   nodes: TopologyNode[];
   edges: TopologyEdge[];
 }
-
