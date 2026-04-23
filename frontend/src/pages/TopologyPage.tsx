@@ -13,9 +13,16 @@ import { Save, RefreshCw } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
-function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean, isStale: boolean) {
   if (status === "offline") {
-    return { opacity: 0.45, border: "1px solid #cbd5e1", background: "#f8fafc" };
+    return { 
+      opacity: isStale ? 0.25 : 0.45, 
+      border: isStale ? "1px dashed #94a3b8" : "1px solid #cbd5e1", 
+      background: isStale ? "#f1f5f9" : "#f8fafc",
+      filter: isStale ? "grayscale(100%)" : "none",
+    };
   }
   if (isUnclassified) {
     return { 
@@ -32,17 +39,31 @@ function nodeStyle(status: string, isNew: boolean, isUnclassified: boolean) {
 
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
+  const [config, setConfig] = useState<{ offline_retention_days: number } | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const data = await api.topology();
+    // Note: api.config() is expected to be available from the offline-device-policy branch logic
+    const [data, configData] = await Promise.all([
+      api.topology(), 
+      (api as any).config ? (api as any).config() : Promise.resolve({ offline_retention_days: 30 })
+    ]);
     setTopology(data);
+    setConfig(configData);
+    
+    const now = Date.now();
+    const retentionDays = configData.offline_retention_days;
+    
     const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
       const isUnclassified = node.x < -100;
+      const offlineAge = now - Date.parse(node.device.last_seen);
+      const isStale = node.device.status === "offline" && offlineAge > (retentionDays * MS_PER_DAY);
+
       const title = node.custom_label || node.device.hostname || node.device.ip;
       return {
         id: node.device_id,
@@ -50,9 +71,9 @@ export default function TopologyPage() {
         data: {
           label: (
             <div className="relative min-w-[150px] p-1">
-              {isUnclassified && (
-                <div className="absolute -top-6 left-0 text-[10px] font-bold uppercase text-cyan-600">
-                  New / Unclassified
+              {(isUnclassified || isStale) && (
+                <div className={`absolute -top-6 left-0 text-[10px] font-bold uppercase ${isStale ? "text-slate-400" : "text-cyan-600"}`}>
+                  {isStale ? "Stale / Offline" : "New / Unclassified"}
                 </div>
               )}
               <div className="font-semibold">{title}</div>
@@ -61,9 +82,10 @@ export default function TopologyPage() {
             </div>
           )
         },
-        style: nodeStyle(node.device.status, isNew, isUnclassified)
+        style: nodeStyle(node.device.status, isNew, isUnclassified, isStale)
       };
     });
+    
     const flowEdges: Edge[] = data.edges.map((edge) => ({
       id: edge.id,
       source: edge.from_device_id,
@@ -72,6 +94,7 @@ export default function TopologyPage() {
       label: edge.confirmed_by_user ? "manual" : "auto",
       style: { stroke: edge.confirmed_by_user ? "#111827" : "#94a3b8" }
     }));
+    
     setNodes(flowNodes);
     setEdges(flowEdges);
   }, [setEdges, setNodes]);
