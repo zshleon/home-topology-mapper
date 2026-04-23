@@ -15,7 +15,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 ## Phase 3 - Topology Editor
 
-- [ ] `topology-node-editor`: Add node label/icon editing inside the topology page.
+- [/] `topology-node-editor`: Add node label/icon editing inside the topology page.
 - [ ] `topology-edge-editor`: Let users choose ethernet/wifi/unknown per edge.
 - [ ] `topology-delete-link`: Add explicit edge deletion UX.
 - [ ] `topology-screenshot-mode`: Add a clean screenshot/share view.
@@ -24,7 +24,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 
 - [x] `preserve-manual-edges`: Add tests proving scans cannot overwrite confirmed manual edges.
 - [x] `new-device-bin`: Place newly discovered devices in a visible unclassified area.
-- [/] `offline-device-policy`: Add configurable offline retention and visual style.
+- [x] `offline-device-policy`: Add configurable offline retention and visual style.
 
 ## Phase 5 - Docker And LXC Fit
 
