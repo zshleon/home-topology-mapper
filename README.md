@@ -13,7 +13,7 @@ It is not an enterprise NMS. The goal is:
 ## Quick Start
 
 ```bash
-git clone https://github.com/your-name/home-topology-mapper.git
+git clone https://github.com/zshleon/home-topology-mapper.git
 cd home-topology-mapper
 cp .env.example .env
 # Edit HTM_SCAN_SUBNETS in .env, for example: HTM_SCAN_SUBNETS=10.0.0.0/24
@@ -42,6 +42,8 @@ The default `docker-compose.yml` already does this.
 
 ## Development
 
+Start with `TASKS.md` and keep one task per branch.
+
 Backend:
 
 ```bash
@@ -62,7 +64,13 @@ npm run dev
 
 The frontend dev server expects the API at `http://localhost:8080` by default.
 
+## Collaboration
+
+- `AGENTS.md` defines AI collaboration rules for Codex and Antigravity.
+- `docs/ANTIGRAVITY_HANDOFF.md` is the handoff note for a second AI agent.
+- `CONTRIBUTING.md` lists local checks and MVP scope boundaries.
+- `.github/pull_request_template.md` keeps pull requests reviewable.
+
 ## Project Status
 
 This is an MVP scaffold. The first production milestone is to make scanning, editing, and persistence solid before adding SNMP, auth, alerting, or cloud features.
-

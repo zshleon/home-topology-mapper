@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a reproducible problem.
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Run ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Docker/PVE/LXC OS, browser, subnet size, nmap version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Remove secrets, public IPs, and private network exports before posting.
+      render: text
