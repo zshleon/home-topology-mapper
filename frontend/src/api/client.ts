@@ -11,6 +11,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const contentType = response.headers.get("content-type") ?? "";
     let message = response.statusText;
+    let hint: string | undefined = undefined;
+
     if (contentType.includes("application/json")) {
       try {
         const data = await response.json() as { detail?: unknown; message?: unknown };
@@ -18,16 +20,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
           message = data.detail;
         } else if (data.detail && typeof data.detail === "object") {
           const detail = data.detail as { message?: unknown; hint?: unknown; code?: unknown };
-          const parts = [
-            typeof detail.code === "string" ? detail.code : null,
-            typeof detail.message === "string" ? detail.message : null,
-            typeof detail.hint === "string" ? detail.hint : null
-          ].filter(Boolean);
-          message = parts.join("\n");
+          message = typeof detail.message === "string" ? detail.message : (typeof detail.code === "string" ? detail.code : JSON.stringify(detail));
+          hint = typeof detail.hint === "string" ? detail.hint : undefined;
         } else if (typeof data.message === "string") {
           message = data.message;
-        } else {
-          message = JSON.stringify(data);
         }
       } catch {
         message = await response.text();
@@ -36,7 +32,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       const text = await response.text();
       message = text || message;
     }
-    throw new Error(message || response.statusText);
+    
+    const error = new Error(message || response.statusText);
+    (error as any).hint = hint;
+    throw error;
   }
   return response.json() as Promise<T>;
 }

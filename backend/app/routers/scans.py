@@ -60,10 +60,13 @@ def start_scan(
         ) from exc
     except Exception as exc:
         record.error = str(exc)
-        record.error_hint = "Check the backend logs for a full traceback."
+        record.error_hint = "An unexpected error occurred. Check backend logs for details."
         session.add(record)
         session.commit()
-        raise HTTPException(status_code=500, detail=record.error) from exc
+        raise HTTPException(
+            status_code=500,
+            detail={"message": str(exc), "hint": record.error_hint},
+        ) from exc
     finally:
         record.finished_at = datetime.now(UTC)
         session.add(record)
