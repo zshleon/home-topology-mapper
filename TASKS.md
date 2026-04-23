@@ -18,7 +18,7 @@ This project uses small, reviewable branches. Pick exactly one task per branch u
 - [ ] `topology-node-editor`: Add node label/icon editing inside the topology page.
 - [ ] `topology-edge-editor`: Let users choose ethernet/wifi/unknown per edge.
 - [ ] `topology-delete-link`: Add explicit edge deletion UX.
-- [ ] `topology-screenshot-mode`: Add a clean screenshot/share view.
+- [/] `topology-screenshot-mode`: Add a clean screenshot/share view.
 
 ## Phase 4 - Persistence And Incremental Scans
 

@@ -9,7 +9,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw } from "lucide-react";
+import { Save, RefreshCw, Share2, Eye, EyeOff, Printer as PrintIcon } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
@@ -27,12 +27,13 @@ export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [isScreenshotMode, setIsScreenshotMode] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const data = await api.topology();
     setTopology(data);
-    const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    const latestSeen = data.nodes.reduce((max: number, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
       const title = node.custom_label || node.device.hostname || node.device.ip;
@@ -51,7 +52,7 @@ export default function TopologyPage() {
         style: nodeStyle(node.device.status, isNew)
       };
     });
-    const flowEdges: Edge[] = data.edges.map((edge) => ({
+    const flowEdges: Edge[] = data.edges.map((edge: any) => ({
       id: edge.id,
       source: edge.from_device_id,
       target: edge.to_device_id,
@@ -124,18 +125,38 @@ export default function TopologyPage() {
           <p className="text-sm text-slate-500">Drag nodes, connect devices, and save the layout. Manual edges are preserved across scans.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => load()} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft">
-            <RefreshCw className="h-4 w-4" />
-            Reload
-          </button>
-          <button onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-white shadow-soft">
-            <Save className="h-4 w-4" />
-            Save
-          </button>
+          {!isScreenshotMode && (
+            <>
+              <button onClick={() => setIsScreenshotMode(true)} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft hover:bg-slate-50">
+                <Share2 className="h-4 w-4" />
+                Screenshot / Share
+              </button>
+              <button onClick={() => load()} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft hover:bg-slate-50">
+                <RefreshCw className="h-4 w-4" />
+                Reload
+              </button>
+              <button onClick={save} className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 text-white shadow-soft">
+                <Save className="h-4 w-4" />
+                Save
+              </button>
+            </>
+          )}
+          {isScreenshotMode && (
+            <>
+              <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-soft hover:bg-slate-50">
+                <PrintIcon className="h-4 w-4" />
+                Print View
+              </button>
+              <button onClick={() => setIsScreenshotMode(false)} className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-white shadow-soft">
+                <EyeOff className="h-4 w-4" />
+                Exit Mode
+              </button>
+            </>
+          )}
         </div>
       </div>
-      {message && <div className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-800">{message}</div>}
-      <div className="h-[720px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+      {message && !isScreenshotMode && <div className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-800">{message}</div>}
+      <div className={`overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft ${isScreenshotMode ? "h-[85vh]" : "h-[720px]"}`}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -148,7 +169,7 @@ export default function TopologyPage() {
           <Controls />
         </ReactFlow>
       </div>
-      <p className="text-sm text-slate-500">{counts.nodes} nodes, {counts.edges} links</p>
+      {!isScreenshotMode && <p className="text-sm text-slate-500">{counts.nodes} nodes, {counts.edges} links</p>}
     </div>
   );
 }
