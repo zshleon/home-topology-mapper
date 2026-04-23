@@ -46,10 +46,25 @@ def start_scan(
             f"marked_offline={offline_count}"
         )
     except Exception as exc:
-        record.error = str(exc)
+        error_msg = str(exc)
+        hint = "An unexpected error occurred during scanning."
+        
+        if "nmap is not installed" in error_msg:
+            hint = "Nmap is missing. Please install it in the container (e.g., apk add nmap or apt-get install nmap)."
+        elif "Operation not permitted" in error_msg or "NET_RAW" in error_msg:
+            hint = "Permission denied. Nmap requires root or NET_RAW capabilities. In LXC/Docker, check host networking or privileged mode."
+        elif "timed out" in error_msg.lower():
+            hint = "Scan timed out. The network might be too large or slow. Try a smaller range or 'quick' mode."
+        elif "failed" in error_msg.lower():
+            hint = "Scan failed. Check if the target subnet is reachable from this host."
+
+        record.error = f"{error_msg} | HINT: {hint}"
         session.add(record)
         session.commit()
-        raise HTTPException(status_code=500, detail=record.error) from exc
+        raise HTTPException(
+            status_code=500, 
+            detail={"message": error_msg, "hint": hint}
+        ) from exc
     finally:
         record.finished_at = datetime.now(UTC)
         session.add(record)

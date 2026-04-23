@@ -9,8 +9,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...init
   });
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || response.statusText);
+    let detail: any = await response.text();
+    try {
+      detail = JSON.parse(detail);
+    } catch {
+      // Not JSON
+    }
+    const message = typeof detail === "object" ? (detail.detail?.message || detail.detail || "Request failed") : detail;
+    const hint = typeof detail === "object" ? detail.detail?.hint : undefined;
+    
+    const error = new Error(message);
+    (error as any).hint = hint;
+    throw error;
   }
   return response.json() as Promise<T>;
 }
