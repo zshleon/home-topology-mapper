@@ -9,7 +9,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState
 } from "reactflow";
-import { Save, RefreshCw } from "lucide-react";
+import { Save, RefreshCw, Trash2, Info, Share2 } from "lucide-react";
 import { api } from "../api/client";
 import type { Topology } from "../types";
 
@@ -23,16 +23,29 @@ function nodeStyle(status: string, isNew: boolean) {
   return { border: "1px solid #dbe2ea", background: "#ffffff" };
 }
 
+function edgeStyle(isConfirmed: boolean, isSelected: boolean) {
+  return {
+    stroke: isSelected ? "#0f172a" : isConfirmed ? "#1e293b" : "#94a3b8",
+    strokeWidth: isSelected ? 3 : 2,
+  };
+}
+
 export default function TopologyPage() {
   const [topology, setTopology] = useState<Topology | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const selectedEdge = useMemo(() => 
+    edges.find(e => e.id === selectedEdgeId), 
+    [edges, selectedEdgeId]
+  );
 
   const load = useCallback(async () => {
     const data = await api.topology();
     setTopology(data);
-    const latestSeen = data.nodes.reduce((max, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
+    const latestSeen = data.nodes.reduce((max: number, node) => Math.max(max, Date.parse(node.device.last_seen)), 0);
     const flowNodes: Node[] = data.nodes.map((node) => {
       const isNew = Date.parse(node.device.first_seen) === latestSeen || Date.parse(node.device.last_seen) === latestSeen;
       const title = node.custom_label || node.device.hostname || node.device.ip;
@@ -51,13 +64,14 @@ export default function TopologyPage() {
         style: nodeStyle(node.device.status, isNew)
       };
     });
-    const flowEdges: Edge[] = data.edges.map((edge) => ({
+    const flowEdges: Edge[] = data.edges.map((edge: any) => ({
       id: edge.id,
       source: edge.from_device_id,
       target: edge.to_device_id,
       animated: !edge.confirmed_by_user,
       label: edge.confirmed_by_user ? "manual" : "auto",
-      style: { stroke: edge.confirmed_by_user ? "#111827" : "#94a3b8" }
+      data: { confirmed: edge.confirmed_by_user },
+      style: edgeStyle(edge.confirmed_by_user, false)
     }));
     setNodes(flowNodes);
     setEdges(flowEdges);
@@ -75,8 +89,9 @@ export default function TopologyPage() {
             ...connection,
             id: `manual-${connection.source}-${connection.target}-${Date.now()}`,
             label: "manual",
+            data: { confirmed: true },
             animated: false,
-            style: { stroke: "#111827" }
+            style: edgeStyle(true, false)
           },
           current
         )
@@ -114,6 +129,12 @@ export default function TopologyPage() {
     await load();
   };
 
+  const deleteSelectedEdge = () => {
+    if (!selectedEdgeId) return;
+    setEdges(eds => eds.filter(e => e.id !== selectedEdgeId));
+    setSelectedEdgeId(null);
+  };
+
   const counts = useMemo(() => ({ nodes: nodes.length, edges: edges.length }), [edges.length, nodes.length]);
 
   return (
@@ -135,18 +156,74 @@ export default function TopologyPage() {
         </div>
       </div>
       {message && <div className="rounded-lg bg-cyan-50 p-3 text-sm text-cyan-800">{message}</div>}
-      <div className="h-[720px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          fitView
-        >
-          <Background />
-          <Controls />
-        </ReactFlow>
+      <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
+        <div className="relative h-[720px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onEdgeClick={(_, edge) => {
+              setSelectedEdgeId(edge.id);
+              setEdges(eds => eds.map(e => ({
+                ...e,
+                style: edgeStyle(e.data?.confirmed || false, e.id === edge.id)
+              })));
+            }}
+            onPaneClick={() => {
+              setSelectedEdgeId(null);
+              setEdges(eds => eds.map(e => ({
+                ...e,
+                style: edgeStyle(e.data?.confirmed || false, false)
+              })));
+            }}
+            fitView
+          >
+            <Background />
+            <Controls />
+          </ReactFlow>
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <h3 className="font-semibold text-slate-700 text-lg mb-4">Properties</h3>
+          
+          {selectedEdge ? (
+            <div className="space-y-6">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">Connection Action</label>
+                <div className="mt-4">
+                  <button
+                    onClick={() => {
+                      if (confirm("Are you sure you want to delete this link?")) {
+                        deleteSelectedEdge();
+                      }
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Link
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100">
+                <div className="rounded-lg bg-slate-50 p-4 text-xs text-slate-500 leading-relaxed">
+                  <div className="flex items-center gap-2 mb-2 font-semibold text-slate-700">
+                    <Info className="h-3.5 w-3.5" />
+                    <span>Edge Information</span>
+                  </div>
+                  <p>Deleting a link here will remove it from the database after you click "Save". Auto-discovered links may reappear after the next scan unless manually overridden.</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[300px] text-slate-400 text-sm text-center px-6">
+              <Share2 className="h-10 w-10 mb-4 opacity-20" />
+              <p>Select a connection line on the map to view actions or delete it.</p>
+            </div>
+          )}
+        </div>
       </div>
       <p className="text-sm text-slate-500">{counts.nodes} nodes, {counts.edges} links</p>
     </div>
