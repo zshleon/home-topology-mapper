@@ -39,7 +39,7 @@ brand identity — plus the first backend hardening pass (CORS + config).
 - Tagline (zh): 家庭网络拓扑
 - Tagline (en): Home network topology
 - Primary brand color: indigo `--brand: 99 102 241` (light) / `129 140 248` (dark)
-- Repo and package stay `hometopo` to preserve stars/history
+- Repository renamed to `zshleon/HomeTopo`; package/service identifiers use `hometopo`
 
 ## Rollback plan
 Every change lives on branch `feat/ui-overhaul-v2`. If review uncovers issues,
