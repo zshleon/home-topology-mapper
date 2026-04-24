@@ -1,4 +1,3 @@
-import pytest
 from app.routers.diagnostics import check_nmap, check_net_raw
 
 def test_check_nmap_structure():

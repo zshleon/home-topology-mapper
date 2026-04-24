@@ -38,4 +38,4 @@ def test_guess_type_priority():
     device = ScannedDevice(ip="192.168.1.100", hostname="pve-gateway", ports=[53, 80, 443])
     dtype, is_node = _guess_type(device, "192.168.1.0/24")
     assert dtype == DeviceType.router
-    assert is_node == True
+    assert is_node is True

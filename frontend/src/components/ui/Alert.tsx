@@ -39,7 +39,7 @@ export function Alert({ tone = "info", title, children, className }: AlertProps)
       <div className="min-w-0 flex-1">
         {title && <div className="font-medium">{title}</div>}
         {children && (
-          <div className={cn("text-fg/90", title && "mt-1")}>{children}</div>
+          <div className={cn("text-fg/90", title ? "mt-1" : undefined)}>{children}</div>
         )}
       </div>
     </div>

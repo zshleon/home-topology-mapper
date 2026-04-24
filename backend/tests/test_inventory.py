@@ -1,6 +1,6 @@
 import pytest
 from sqlmodel import Session, create_engine, SQLModel, select
-from app.models import Device, DeviceStatus, DeviceType
+from app.models import Device, DeviceStatus
 from app.services.inventory import find_existing_device, upsert_scanned_devices
 from app.services.scanner import ScannedDevice
 
