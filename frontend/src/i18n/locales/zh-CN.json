@@ -1,0 +1,162 @@
+{
+  "brand": {
+    "name": "HomeWeb",
+    "tagline": "看见你家的网"
+  },
+  "nav": {
+    "overview": "总览",
+    "devices": "设备",
+    "topology": "拓扑",
+    "github": "项目源码"
+  },
+  "theme": {
+    "aria": "切换主题",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "common": {
+    "language": "语言",
+    "refresh": "刷新",
+    "retry": "重试",
+    "cancel": "取消",
+    "confirm": "确定",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "search": "搜索",
+    "filterAll": "全部",
+    "loading": "加载中…",
+    "empty": "暂无数据",
+    "yes": "是",
+    "no": "否",
+    "online": "在线",
+    "offline": "离线",
+    "never": "从未",
+    "copied": "已复制"
+  },
+  "status": {
+    "healthy": "运行正常",
+    "degraded": "部分降级",
+    "down": "服务异常"
+  },
+  "dashboard": {
+    "heroTitle": "看见你家的网",
+    "heroSubtitle": "发现、识别并持续观测家里每一台联网设备。",
+    "cta": "立即开始扫描",
+    "stats": {
+      "total": "设备总数",
+      "totalHint": "已收录",
+      "online": "在线",
+      "onlineHint": "最近一次扫描可达",
+      "offline": "离线",
+      "offlineHint": "在保留期内但不可达",
+      "nodes": "拓扑节点",
+      "nodesHint": "包含骨干网设备"
+    },
+    "scan": {
+      "title": "发起扫描",
+      "description": "quick 模式适合日常，full 模式深入探测端口与服务。",
+      "subnets": "子网范围",
+      "subnetsPlaceholder": "如 192.168.1.0/24，多个用逗号分隔",
+      "mode": "扫描模式",
+      "start": "开始扫描",
+      "running": "扫描中…",
+      "lastRun": "上次扫描",
+      "modeQuick": "quick — 快速",
+      "modeFull": "full — 深度"
+    },
+    "history": {
+      "title": "扫描历史",
+      "description": "最近 10 次扫描结果",
+      "empty": "还没有扫描记录。先跑一次看看吧。",
+      "devicesFound": "发现 {{count}} 台设备"
+    },
+    "diagnostics": {
+      "title": "扫描器自检",
+      "ok": "nmap 已就绪，可以扫描。",
+      "warn": "nmap 未就绪，请检查容器能力 (NET_RAW) 或主机安装。"
+    }
+  },
+  "devices": {
+    "title": "设备清单",
+    "subtitle": "所有发现过的设备，按最近在线时间排序。",
+    "filters": {
+      "search": "按名称、IP、MAC、厂商搜索",
+      "type": "按类型筛选"
+    },
+    "table": {
+      "name": "名称",
+      "ip": "IP 地址",
+      "mac": "MAC 地址",
+      "vendor": "厂商",
+      "type": "类型",
+      "status": "状态",
+      "lastSeen": "最近在线"
+    },
+    "empty": {
+      "title": "还没有设备",
+      "description": "在总览页发起一次扫描，就能看见家里的联网设备。"
+    }
+  },
+  "topology": {
+    "title": "网络拓扑",
+    "subtitle": "拖动节点调整布局，选中节点编辑元数据。",
+    "legend": {
+      "router": "路由器",
+      "switch": "交换机",
+      "ap": "AP",
+      "server": "服务器",
+      "iot": "智能设备",
+      "phone": "手机",
+      "computer": "电脑",
+      "printer": "打印机",
+      "camera": "摄像头",
+      "unknown": "未知"
+    },
+    "properties": {
+      "title": "节点属性",
+      "empty": "选中一个节点以编辑元数据。",
+      "displayName": "显示名称",
+      "type": "类型",
+      "ip": "IP",
+      "mac": "MAC",
+      "notes": "备注",
+      "save": "保存",
+      "pin": "固定位置",
+      "unpin": "取消固定"
+    }
+  },
+  "deviceTypes": {
+    "router": "路由器",
+    "switch": "交换机",
+    "ap": "无线 AP",
+    "server": "服务器",
+    "nas": "NAS",
+    "iot": "IoT 设备",
+    "phone": "手机",
+    "tablet": "平板",
+    "computer": "电脑",
+    "laptop": "笔记本",
+    "printer": "打印机",
+    "camera": "摄像头",
+    "tv": "电视盒子",
+    "speaker": "音响",
+    "gaming": "游戏机",
+    "unknown": "未知"
+  },
+  "errors": {
+    "loadConfig": "加载配置失败，请检查后端是否正常。",
+    "loadDevices": "加载设备列表失败。",
+    "loadTopology": "加载拓扑图失败。",
+    "scanFailed": "扫描失败：{{message}}",
+    "saveFailed": "保存失败：{{message}}"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{n}} 分钟前",
+    "hoursAgo": "{{n}} 小时前",
+    "daysAgo": "{{n}} 天前",
+    "atDate": "于 {{date}}"
+  }
+}
