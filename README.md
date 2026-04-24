@@ -1,14 +1,14 @@
 <div align="center">
 
 <!-- Inline SVG logo: a small network glyph -->
-<img src="https://raw.githubusercontent.com/zshleon/home-topology-mapper/main/docs/images/brand.svg" alt="HomeTopo" width="72" height="72" onerror="this.style.display='none'" />
+<img src="https://raw.githubusercontent.com/zshleon/HomeTopo/main/docs/images/brand.svg" alt="HomeTopo" width="72" height="72" onerror="this.style.display='none'" />
 
 # HomeTopo · 家庭网络拓扑
 
 **一个好看、好用、自托管的家庭网络拓扑工具。**
 A self-hosted home-network topology mapper that is easy to use and easy on the eyes.
 
-[![CI](https://github.com/zshleon/home-topology-mapper/actions/workflows/ci.yml/badge.svg)](https://github.com/zshleon/home-topology-mapper/actions)
+[![CI](https://github.com/zshleon/HomeTopo/actions/workflows/ci.yml/badge.svg)](https://github.com/zshleon/HomeTopo/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [中文 README](#中文) · [English README](#english)
@@ -44,8 +44,8 @@ HomeTopo 是一个面向家庭 / Homelab 的轻量拓扑工具。
 ### 二、快速开始（Docker Compose）
 
 ```bash
-git clone https://github.com/zshleon/home-topology-mapper.git
-cd home-topology-mapper
+git clone https://github.com/zshleon/HomeTopo.git
+cd HomeTopo
 cp .env.example .env
 # 至少改一个：把 HTM_SCAN_SUBNETS 改成你家的网段
 # 比如 HTM_SCAN_SUBNETS=10.0.0.0/24
@@ -123,8 +123,8 @@ It's deliberately not an enterprise NMS. It:
 ### Quick start
 
 ```bash
-git clone https://github.com/zshleon/home-topology-mapper.git
-cd home-topology-mapper
+git clone https://github.com/zshleon/HomeTopo.git
+cd HomeTopo
 cp .env.example .env
 # Set HTM_SCAN_SUBNETS to your LAN
 docker compose up -d --build

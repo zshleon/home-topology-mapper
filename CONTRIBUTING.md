@@ -33,7 +33,7 @@ npm run build
 Docker:
 
 ```bash
-docker build -t home-topology-mapper:local .
+docker build -t hometopo:local .
 ```
 
 ## Design Rules

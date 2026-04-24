@@ -10,8 +10,8 @@ A bundle is a single file that carries the branch and its commits. Apply from yo
 local clone:
 
 ```bash
-cd /path/to/home-topology-mapper
-git fetch ~/Documents/Claude/Projects/home-topology-mapper/feat-ui-overhaul-v2.bundle \
+cd /path/to/HomeTopo
+git fetch ~/Documents/Claude/Projects/HomeTopo/feat-ui-overhaul-v2.bundle \
   feat/ui-overhaul-v2:feat/ui-overhaul-v2
 git checkout feat/ui-overhaul-v2
 # inspect, run it, then:
@@ -33,10 +33,10 @@ The raw source of the branch is also mirrored into the workspace folder under
 `feat-ui-overhaul-v2/`. From your local repo:
 
 ```bash
-cd /path/to/home-topology-mapper
+cd /path/to/HomeTopo
 git checkout -b feat/ui-overhaul-v2 main
 rsync -a --delete \
-  ~/Documents/Claude/Projects/home-topology-mapper/feat-ui-overhaul-v2/ \
+  ~/Documents/Claude/Projects/HomeTopo/feat-ui-overhaul-v2/ \
   .
 git add -A
 git commit -m "feat: UI overhaul v2 (see SPRINT_STATUS.md)"
@@ -52,7 +52,7 @@ loads, the language switcher works, dark mode persists, and a scan still runs.
 
 ```bash
 ssh root@10.0.0.100
-cd /srv/home-topology-mapper     # or wherever it lives
+cd /opt/HomeTopo     # or wherever it lives
 git fetch origin feat/ui-overhaul-v2
 git checkout feat/ui-overhaul-v2
 docker compose up -d --build

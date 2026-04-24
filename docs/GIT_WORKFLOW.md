@@ -7,7 +7,7 @@ git init
 git add .
 git commit -m "chore: initialize home topology mapper"
 git branch -M main
-git remote add origin https://github.com/zshleon/home-topology-mapper.git
+git remote add origin https://github.com/zshleon/HomeTopo.git
 git push -u origin main
 ```
 
@@ -35,7 +35,7 @@ Open a PR with:
 ## Current Remote
 
 ```bash
-git remote add origin https://github.com/zshleon/home-topology-mapper.git
+git remote add origin https://github.com/zshleon/HomeTopo.git
 ```
 
 The GitHub repository should be created without a generated README, `.gitignore`, or license because this repository already contains them.

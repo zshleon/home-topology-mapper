@@ -23,7 +23,7 @@ const navItems: NavItem[] = [
   { id: "topology",  labelKey: "nav.topology",  icon: GitFork     }
 ];
 
-const GITHUB_URL = "https://github.com/zshleon/home-topology-mapper";
+const GITHUB_URL = "https://github.com/zshleon/HomeTopo";
 
 export default function App() {
   const { t, i18n } = useTranslation();

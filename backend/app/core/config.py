@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_name: str = "HomeTopo"
-    database_url: str = "sqlite:///./data/home-topology.db"
+    database_url: str = "sqlite:///./data/hometopo.db"
     scan_subnets: str = "192.168.1.0/24"
     scan_mode: str = "quick"
     offline_retention_days: int = 30
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     # Comma-separated origins. "*" means allow-all (dev only). In prod set to
-    # the exact origin(s) serving the UI, e.g. "http://10.0.0.100,http://home-topology.lan".
+    # the exact origin(s) serving the UI, e.g. "http://10.0.0.100,http://hometopo.lan".
     cors_origins: str = "*"
 
     model_config = SettingsConfigDict(env_prefix="HTM_", env_file=".env", extra="ignore")
