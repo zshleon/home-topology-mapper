@@ -64,13 +64,16 @@ See [`APPLY.md`](APPLY.md) for the one-line git command.
 | F9   | `feat(topology): custom TopologyNode + themed canvas + redesigned inspector` |
 | D1   | `docs(readme): bilingual HomeWeb README + brand logo` |
 | D2   | `ci: run pytest + ruff on backend, add pip/npm caches, typecheck frontend` |
+| fix  | `fix(frontend): sync package lock for i18n deps` |
+| fix  | `fix(ci): address typecheck and ruff failures` |
 
 ## What actually changed (big picture)
 
-- **18 files touched, all on branch `feat/ui-overhaul-v2`**
+- **44 files touched, all on branch `feat/ui-overhaul-v2`**
 - **12 new components/files** under `frontend/src/{components,components/ui,lib,i18n,utils}`
 - **Zero breaking API changes** — existing `/api/devices`, `/api/scans`, `/api/topology`, `/api/config` responses are a superset of what they were
 - **One new dependency group** in frontend: `i18next`, `react-i18next`, `i18next-browser-languagedetector`
+- **CI follow-up fixed** — package lock now includes the i18n deps, frontend typecheck passes, and backend ruff issues are cleaned up
 - **CORS default unchanged** (`*`) so existing deployments keep working; `HTM_CORS_ORIGINS=http://10.0.0.100` is the recommended prod override
 
 ## Next sprint preview (when you're ready)
