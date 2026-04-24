@@ -54,7 +54,7 @@ export function BrandBlock({ name, tagline, className }: BrandBlockProps) {
         <BrandMark className="text-white" size={22} />
       </div>
       <div className="min-w-0">
-        <div className="truncate text-base font-semibold text-fg">{name}</div>
+        <div className="truncate text-sm font-semibold text-fg" title={name}>{name}</div>
         {tagline && (
           <div className="truncate text-xs text-muted">{tagline}</div>
         )}

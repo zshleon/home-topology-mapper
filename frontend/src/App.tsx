@@ -29,6 +29,7 @@ export default function App() {
   const { t, i18n } = useTranslation();
   const [page, setPage] = useState<Page>("dashboard");
   const [animKey, setAnimKey] = useState(0);
+  const isTopologyPage = page === "topology";
 
   // bump a key on every page switch so fade-in animation replays
   useEffect(() => {
@@ -135,7 +136,12 @@ export default function App() {
         {/* content */}
         <div
           key={animKey}
-          className="mx-auto max-w-7xl animate-fade-in px-5 py-6 lg:py-8"
+          className={cn(
+            "animate-fade-in",
+            isTopologyPage
+              ? "w-full max-w-none px-4 py-4 lg:px-6 lg:py-5"
+              : "mx-auto max-w-7xl px-5 py-6 lg:py-8"
+          )}
         >
           {page === "dashboard" && (
             <Dashboard onOpenTopology={() => setPage("topology")} />

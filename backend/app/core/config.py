@@ -14,14 +14,14 @@ class Settings(BaseSettings):
     static_dir: Path = Path("static")
 
     # --- Brand / UI ---
-    ui_brand_name: str = "HomeWeb"
-    ui_brand_tagline_zh: str = "看见你家的网"
-    ui_brand_tagline_en: str = "See your home network"
+    ui_brand_name: str = "Home Topology Mapper"
+    ui_brand_tagline_zh: str = "家庭网络拓扑"
+    ui_brand_tagline_en: str = "Home network topology"
     default_locale: str = "zh-CN"
 
     # --- CORS ---
     # Comma-separated origins. "*" means allow-all (dev only). In prod set to
-    # the exact origin(s) serving the UI, e.g. "http://10.0.0.100,http://homeweb.lan".
+    # the exact origin(s) serving the UI, e.g. "http://10.0.0.100,http://home-topology.lan".
     cors_origins: str = "*"
 
     model_config = SettingsConfigDict(env_prefix="HTM_", env_file=".env", extra="ignore")

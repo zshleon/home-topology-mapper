@@ -247,9 +247,9 @@ export default function TopologyPage() {
   const iconOptions = Object.keys(NODE_ICONS);
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-[calc(100vh-7rem)] flex-col gap-4">
       {!isScreenshotMode && (
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-none flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-fg">
               {t("topology.title")}
@@ -262,7 +262,7 @@ export default function TopologyPage() {
               onClick={() => setIsScreenshotMode(true)}
             >
               <Share2 className="h-4 w-4" />
-              Screenshot
+              {t("common.screenshot")}
             </Button>
             <Button variant="secondary" onClick={() => load()}>
               <RefreshCw className="h-4 w-4" />
@@ -282,14 +282,18 @@ export default function TopologyPage() {
 
       <div
         className={cn(
-          "grid gap-5",
-          isScreenshotMode ? "grid-cols-1" : "lg:grid-cols-[1fr_320px]"
+          "grid min-h-0 flex-1 gap-4",
+          isScreenshotMode
+            ? "grid-cols-1"
+            : "xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_320px]"
         )}
       >
         <Card
           className={cn(
             "relative overflow-hidden p-0",
-            isScreenshotMode ? "h-[85vh]" : "h-[720px]"
+            isScreenshotMode
+              ? "h-[calc(100vh-4rem)] min-h-[640px]"
+              : "h-[calc(100vh-11rem)] min-h-[640px]"
           )}
         >
           {isScreenshotMode && (
@@ -299,14 +303,14 @@ export default function TopologyPage() {
                 onClick={() => window.print()}
               >
                 <PrintIcon className="h-4 w-4" />
-                Print
+                {t("common.print")}
               </Button>
               <Button
                 onClick={() => setIsScreenshotMode(false)}
                 variant="primary"
               >
                 <EyeOff className="h-4 w-4" />
-                Exit
+                {t("common.exit")}
               </Button>
             </div>
           )}
@@ -332,6 +336,7 @@ export default function TopologyPage() {
               setSelectedEdgeId(null);
             }}
             fitView
+            fitViewOptions={{ padding: 0.04 }}
           >
             <Background
               variant={BackgroundVariant.Dots}
@@ -360,9 +365,10 @@ export default function TopologyPage() {
         </Card>
 
         {!isScreenshotMode && (
-          <Card>
+          <Card className="flex h-[calc(100vh-11rem)] min-h-[640px] flex-col overflow-hidden">
             <CardHeader
               title={t("topology.properties.title")}
+              className="px-4 py-3"
               actions={
                 (selectedNodeId || selectedEdgeId) && (
                   <Button
@@ -378,7 +384,7 @@ export default function TopologyPage() {
                 )
               }
             />
-            <CardBody>
+            <CardBody className="flex-1 overflow-y-auto p-4">
               {selectedNode ? (
                 <div className="space-y-5">
                   <div>
@@ -501,7 +507,7 @@ export default function TopologyPage() {
                   </Button>
                   <Alert tone="info">
                     <p className="text-xs">
-                      Ethernet → solid · Wi-Fi → dashed. Changes save on Save.
+                      {t("topology.edgeHint")}
                     </p>
                   </Alert>
                 </div>
@@ -517,7 +523,7 @@ export default function TopologyPage() {
       </div>
       {!isScreenshotMode && (
         <p className="text-xs text-subtle">
-          {counts.nodes} · {counts.edges} · retention {retentionDays}d
+          {counts.nodes} · {counts.edges} · {t("topology.retention", { days: retentionDays })}
         </p>
       )}
     </div>

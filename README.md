@@ -1,9 +1,9 @@
 <div align="center">
 
 <!-- Inline SVG logo: a small network glyph -->
-<img src="https://raw.githubusercontent.com/zshleon/home-topology-mapper/main/docs/images/brand.svg" alt="HomeWeb" width="72" height="72" onerror="this.style.display='none'" />
+<img src="https://raw.githubusercontent.com/zshleon/home-topology-mapper/main/docs/images/brand.svg" alt="Home Topology Mapper" width="72" height="72" onerror="this.style.display='none'" />
 
-# HomeWeb · 看见你家的网
+# Home Topology Mapper · 家庭网络拓扑
 
 **一个好看、好用、自托管的家庭网络拓扑工具。**
 A self-hosted home-network topology mapper that is easy to use and easy on the eyes.
@@ -21,7 +21,7 @@ A self-hosted home-network topology mapper that is easy to use and easy on the e
 
 > 用一次 nmap，看清你家每一台联网设备；拖两下鼠标，把拓扑固定下来。
 
-HomeWeb（仓库名仍为 `home-topology-mapper`）是一个面向家庭 / Homelab 的轻量拓扑工具。
+Home Topology Mapper 是一个面向家庭 / Homelab 的轻量拓扑工具。
 不是企业级 NMS，目标很克制：
 
 - 自动扫描并识别局域网里的设备
@@ -81,7 +81,7 @@ http://<你家部署这台机器的 IP>:8080
 | `HTM_OFFLINE_RETENTION_DAYS` | `30` | 离线设备多少天后变暗 |
 | `HTM_DEFAULT_LOCALE` | `zh-CN` | `zh-CN` / `en` |
 | `HTM_CORS_ORIGINS` | `*` | 生产建议写具体地址 |
-| `HTM_UI_BRAND_NAME` | `HomeWeb` | 顶栏品牌名，可自定义 |
+| `HTM_UI_BRAND_NAME` | `Home Topology Mapper` | 顶栏品牌名，可自定义 |
 
 完整变量见 `.env.example`。
 
@@ -111,7 +111,7 @@ MIT。
 
 > One `nmap` sweep, one drag-and-drop canvas, one honest picture of your home LAN.
 
-HomeWeb (repo is still `home-topology-mapper`) is a small, self-hosted topology tool for homelabs.
+Home Topology Mapper is a small, self-hosted topology tool for homelabs.
 It's deliberately not an enterprise NMS. It:
 
 - Scans your LAN and identifies devices

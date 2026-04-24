@@ -1,7 +1,7 @@
 {
   "brand": {
-    "name": "HomeWeb",
-    "tagline": "See your home network"
+    "name": "Home Topology Mapper",
+    "tagline": "Home network topology"
   },
   "nav": {
     "overview": "Overview",
@@ -22,6 +22,9 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "save": "Save",
+    "screenshot": "Screenshot",
+    "print": "Print",
+    "exit": "Exit",
     "edit": "Edit",
     "delete": "Delete",
     "search": "Search",
@@ -41,7 +44,7 @@
     "down": "Down"
   },
   "dashboard": {
-    "heroTitle": "See your home network",
+    "heroTitle": "Home network topology",
     "heroSubtitle": "Discover, identify and continuously observe every device on your home network.",
     "cta": "Run a scan",
     "stats": {
@@ -102,6 +105,8 @@
   "topology": {
     "title": "Network topology",
     "subtitle": "Drag nodes to reposition. Select a node to edit its metadata.",
+    "retention": "retention {{days}}d",
+    "edgeHint": "Ethernet is solid, Wi-Fi is dashed. Changes apply after Save.",
     "legend": {
       "router": "Router",
       "switch": "Switch",

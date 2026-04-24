@@ -107,7 +107,7 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs backdrop-blur">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
-            <span className="tracking-wider">HomeWeb · self-hosted</span>
+            <span className="tracking-wider">Home Topology Mapper · self-hosted</span>
           </div>
           <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
             {t("dashboard.heroTitle")}

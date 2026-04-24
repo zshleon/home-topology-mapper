@@ -1,7 +1,7 @@
 {
   "brand": {
-    "name": "HomeWeb",
-    "tagline": "看见你家的网"
+    "name": "Home Topology Mapper",
+    "tagline": "家庭网络拓扑"
   },
   "nav": {
     "overview": "总览",
@@ -22,6 +22,9 @@
     "cancel": "取消",
     "confirm": "确定",
     "save": "保存",
+    "screenshot": "截图",
+    "print": "打印",
+    "exit": "退出",
     "edit": "编辑",
     "delete": "删除",
     "search": "搜索",
@@ -41,7 +44,7 @@
     "down": "服务异常"
   },
   "dashboard": {
-    "heroTitle": "看见你家的网",
+    "heroTitle": "家庭网络拓扑",
     "heroSubtitle": "发现、识别并持续观测家里每一台联网设备。",
     "cta": "立即开始扫描",
     "stats": {
@@ -102,6 +105,8 @@
   "topology": {
     "title": "网络拓扑",
     "subtitle": "拖动节点调整布局，选中节点编辑元数据。",
+    "retention": "保留 {{days}} 天",
+    "edgeHint": "以太网为实线，Wi-Fi 为虚线。调整后点击保存生效。",
     "legend": {
       "router": "路由器",
       "switch": "交换机",
