@@ -1,6 +1,6 @@
 # Contributing
 
-Home Topology Mapper is developed in small, reviewable tasks. The MVP should stay focused on discovery, topology editing, persistence, and Docker/LXC fit.
+HomeTopo is developed in small, reviewable tasks. The MVP should stay focused on discovery, topology editing, persistence, and Docker/LXC fit.
 
 ## Workflow
 
@@ -33,7 +33,7 @@ npm run build
 Docker:
 
 ```bash
-docker build -t home-topology-mapper:local .
+docker build -t hometopo:local .
 ```
 
 ## Design Rules

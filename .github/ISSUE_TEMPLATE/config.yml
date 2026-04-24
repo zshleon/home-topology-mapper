@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: MVP Scope
-    url: https://github.com/zshleon/home-topology-mapper/blob/main/TASKS.md
+    url: https://github.com/zshleon/HomeTopo/blob/main/TASKS.md
     about: Check the current MVP task list before proposing larger features.

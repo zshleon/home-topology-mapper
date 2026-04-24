@@ -1,2 +1,1 @@
-"""Home Topology Mapper backend."""
-
+"""HomeTopo backend."""

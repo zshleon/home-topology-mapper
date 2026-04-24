@@ -1,6 +1,6 @@
 # Release Guide
 
-Home Topology Mapper uses simple semantic versioning once tags start.
+HomeTopo uses simple semantic versioning once tags start.
 
 ## Versioning
 
@@ -17,7 +17,7 @@ Home Topology Mapper uses simple semantic versioning once tags start.
    ```bash
    cd frontend && npm ci && npm run build
    cd ../backend && python -m compileall app
-   cd .. && docker build -t home-topology-mapper:release .
+   cd .. && docker build -t hometopo:release .
    ```
 
 4. Update README if deployment steps or environment variables changed.

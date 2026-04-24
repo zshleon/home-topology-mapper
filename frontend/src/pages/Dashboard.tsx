@@ -1,20 +1,55 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, AlertTriangle, GitFork, Radar, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  GitFork,
+  Gauge,
+  History,
+  Radar,
+  RefreshCw,
+  Router,
+  Wifi,
+  WifiOff
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { api } from "../api/client";
 import type { Device, ScanRecord } from "../types";
+import { BrandMark } from "../components/Brand";
+import { Card, CardBody, CardHeader } from "../components/ui/Card";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
+import { StatCard } from "../components/ui/StatCard";
+import { Alert } from "../components/ui/Alert";
+import { Badge } from "../components/ui/Badge";
+import { EmptyState } from "../components/ui/EmptyState";
+import { formatRelative } from "../utils/time";
+import { cn } from "../lib/cn";
 
 interface DashboardProps {
   onOpenTopology: () => void;
 }
 
+interface DiagCheck {
+  id: string;
+  name: string;
+  status: "ok" | "warn" | "error";
+  message?: string;
+  hint?: string;
+}
+
 export default function Dashboard({ onOpenTopology }: DashboardProps) {
+  const { t } = useTranslation();
   const [devices, setDevices] = useState<Device[]>([]);
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [subnet, setSubnet] = useState("");
   const [mode, setMode] = useState("quick");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<{ message: string; hint?: string } | null>(null);
-  const [diagnostics, setDiagnostics] = useState<{ checks: any[] } | null>(null);
+  const [error, setError] = useState<{ message: string; hint?: string } | null>(
+    null
+  );
+  const [diagnostics, setDiagnostics] = useState<{ checks: DiagCheck[] } | null>(
+    null
+  );
 
   const refresh = async () => {
     const [deviceData, scanData, diagData] = await Promise.all([
@@ -24,17 +59,23 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
     ]);
     setDevices(deviceData);
     setScans(scanData);
-    setDiagnostics(diagData);
+    setDiagnostics(diagData as { checks: DiagCheck[] } | null);
   };
 
   useEffect(() => {
-    refresh().catch((err) => setError({ message: String(err) }));
+    refresh().catch((err) =>
+      setError({
+        message:
+          err instanceof Error ? err.message : t("errors.loadDevices")
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const stats = useMemo(() => {
-    const online = devices.filter((device) => device.status === "online").length;
+    const online = devices.filter((d) => d.status === "online").length;
     const offline = devices.length - online;
-    const network = devices.filter((device) => device.is_network_node).length;
+    const network = devices.filter((d) => d.is_network_node).length;
     return { online, offline, network, total: devices.length };
   }, [devices]);
 
@@ -45,141 +86,258 @@ export default function Dashboard({ onOpenTopology }: DashboardProps) {
       await api.startScan({ subnet: subnet || undefined, mode });
       await refresh();
     } catch (err) {
-      setError({ 
+      setError({
         message: err instanceof Error ? err.message : String(err),
-        hint: (err as any).hint
+        hint: (err as Error & { hint?: string }).hint
       });
     } finally {
       setLoading(false);
     }
   };
 
+  const errorChecks = (diagnostics?.checks ?? []).filter(
+    (c) => c.status === "error"
+  );
+  const lastScan = scans[0];
+
   return (
     <div className="space-y-6">
-      <section className="rounded-lg bg-slate-950 p-8 text-white shadow-soft">
-        <div className="max-w-3xl">
-          <p className="text-sm uppercase tracking-[0.2em] text-cyan-200">MVP workspace</p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight">Map your home network without turning it into a job.</h2>
-          <p className="mt-4 text-slate-300">
-            Scan your LAN, get a first topology draft, then drag nodes and confirm links by hand.
-            Manual topology always wins over future scans.
+      {/* --- Hero --------------------------------------------------- */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand via-brand/90 to-info p-8 text-white shadow-soft">
+        <div className="relative z-10 max-w-2xl">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs backdrop-blur">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-white" />
+            <span className="tracking-wider">HomeTopo · self-hosted</span>
+          </div>
+          <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+            {t("dashboard.heroTitle")}
+          </h2>
+          <p className="mt-4 text-white/85">
+            {t("dashboard.heroSubtitle")}
           </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => {
+                document
+                  .getElementById("scan-form")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-sm font-medium text-brand hover:bg-white/90"
+            >
+              <Radar className="h-4 w-4" />
+              {t("dashboard.cta")}
+            </button>
+            <button
+              onClick={onOpenTopology}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 text-sm font-medium text-white backdrop-blur hover:bg-white/20"
+            >
+              <GitFork className="h-4 w-4" />
+              {t("nav.topology")}
+            </button>
+          </div>
+        </div>
+        {/* decorative glyph */}
+        <div className="pointer-events-none absolute -right-6 -top-6 text-white/30">
+          <BrandMark size={240} />
         </div>
       </section>
 
-      {diagnostics?.checks.some(c => c.status === "error") && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-rose-800 shadow-soft">
-          <div className="flex items-center gap-3 font-semibold text-lg">
-            <AlertCircle className="h-6 w-6 text-rose-600" />
-            LXC / System Permission Required
-          </div>
-          <div className="mt-3 space-y-3 text-sm opacity-90">
-            {diagnostics.checks.filter(c => c.status === "error").map(check => (
-              <div key={check.id} className="flex flex-col gap-1">
-                <p><span className="font-bold underline decoration-rose-300 underline-offset-4">{check.name}</span>: {check.message}</p>
-                <p className="pl-4 border-l-2 border-rose-200 text-rose-600 font-mono text-xs">{check.hint}</p>
-              </div>
+      {/* --- Diagnostics ------------------------------------------- */}
+      {errorChecks.length > 0 && (
+        <Alert tone="danger" title={t("dashboard.diagnostics.warn")}>
+          <ul className="mt-1 space-y-2">
+            {errorChecks.map((check) => (
+              <li key={check.id} className="text-sm">
+                <span className="font-medium">{check.name}</span>
+                {check.message && <> — {check.message}</>}
+                {check.hint && (
+                  <div className="mt-1 rounded-md bg-danger/10 p-2 font-mono text-xs text-danger">
+                    {check.hint}
+                  </div>
+                )}
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </Alert>
       )}
 
-      <section className="grid gap-4 md:grid-cols-4">
-        {[
-          ["Total devices", stats.total],
-          ["Online", stats.online],
-          ["Offline", stats.offline],
-          ["Network nodes", stats.network]
-        ].map(([label, value]) => (
-          <div key={label} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-            <p className="text-sm text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-semibold">{value}</p>
-          </div>
-        ))}
+      {/* --- Stats grid -------------------------------------------- */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label={t("dashboard.stats.total")}
+          value={stats.total}
+          hint={t("dashboard.stats.totalHint")}
+          icon={<Gauge className="h-4 w-4" />}
+          tone="brand"
+        />
+        <StatCard
+          label={t("dashboard.stats.online")}
+          value={stats.online}
+          hint={t("dashboard.stats.onlineHint")}
+          icon={<Wifi className="h-4 w-4" />}
+          tone="success"
+        />
+        <StatCard
+          label={t("dashboard.stats.offline")}
+          value={stats.offline}
+          hint={t("dashboard.stats.offlineHint")}
+          icon={<WifiOff className="h-4 w-4" />}
+          tone={stats.offline === 0 ? "neutral" : "warn"}
+        />
+        <StatCard
+          label={t("dashboard.stats.nodes")}
+          value={stats.network}
+          hint={t("dashboard.stats.nodesHint")}
+          icon={<Router className="h-4 w-4" />}
+          tone="info"
+        />
       </section>
 
+      {/* --- Scan form + history ----------------------------------- */}
       <section className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="mb-4 flex items-center gap-3">
-            <Radar className="h-5 w-5 text-slate-700" />
-            <h3 className="text-lg font-semibold">Start a scan</h3>
-          </div>
-          <div className="grid gap-3 md:grid-cols-[1fr_140px_auto]">
-            <input
-              value={subnet}
-              onChange={(event) => setSubnet(event.target.value)}
-              placeholder="192.168.1.0/24"
-              className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500"
-            />
-            <select
-              value={mode}
-              onChange={(event) => setMode(event.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-slate-500"
-            >
-              <option value="quick">quick</option>
-              <option value="full">full</option>
-            </select>
-            <button
-              onClick={startScan}
-              disabled={loading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-medium text-white disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              {loading ? "Scanning" : "Scan"}
-            </button>
-          </div>
-          {error && (
-            <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-rose-600" />
-                <div>
-                  <p className="font-semibold text-rose-800">{error.message}</p>
-                  {error.hint && (
-                    <p className="mt-1 text-sm text-rose-700 leading-relaxed">
-                      <span className="font-medium">Hint:</span> {error.hint}
-                    </p>
-                  )}
-                </div>
+        <Card id="scan-form">
+          <CardHeader
+            title={t("dashboard.scan.title")}
+            description={t("dashboard.scan.description")}
+            actions={
+              lastScan && (
+                <span className="text-xs text-muted">
+                  {t("dashboard.scan.lastRun")}:{" "}
+                  {formatRelative(lastScan.started_at, t)}
+                </span>
+              )
+            }
+          />
+          <CardBody className="space-y-4">
+            <div className="grid gap-3 md:grid-cols-[1fr_160px_auto]">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted">
+                  {t("dashboard.scan.subnets")}
+                </label>
+                <Input
+                  value={subnet}
+                  onChange={(e) => setSubnet(e.target.value)}
+                  placeholder={t("dashboard.scan.subnetsPlaceholder") ?? ""}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted">
+                  {t("dashboard.scan.mode")}
+                </label>
+                <Select
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value)}
+                >
+                  <option value="quick">{t("dashboard.scan.modeQuick")}</option>
+                  <option value="full">{t("dashboard.scan.modeFull")}</option>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={startScan}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  <RefreshCw
+                    className={cn("h-4 w-4", loading && "animate-spin")}
+                  />
+                  {loading
+                    ? t("dashboard.scan.running")
+                    : t("dashboard.scan.start")}
+                </Button>
               </div>
             </div>
-          )}
-        </div>
-
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Recent scans</h3>
-            <button onClick={onOpenTopology} className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-sm">
-              <GitFork className="h-4 w-4" />
-              Open topology
-            </button>
-          </div>
-          <div className="space-y-3">
-            {scans.slice(0, 4).map((scan) => (
-              <div 
-                key={scan.id} 
-                className={`rounded-lg border p-3 ${scan.error ? "border-rose-100 bg-rose-50/30" : "border-slate-100"}`}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">{scan.subnet}</p>
-                  {scan.error && (
-                    <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-rose-700">
-                      Failed
-                    </span>
-                  )}
-                </div>
-                <p className={`text-sm mt-1 whitespace-pre-line ${scan.error ? "text-rose-600" : "text-slate-500"}`}>
-                  {scan.result_summary || scan.error || "No summary yet"}
-                </p>
-                {scan.error_hint && (
-                  <p className="mt-1 text-xs text-rose-500 italic">
-                    Hint: {scan.error_hint}
+            {error && (
+              <Alert tone="danger" title={error.message}>
+                {error.hint && (
+                  <p className="text-sm">
+                    <span className="font-medium">Hint:</span> {error.hint}
                   </p>
                 )}
-              </div>
-            ))}
-            {scans.length === 0 && <p className="text-sm text-slate-500">No scans yet.</p>}
-          </div>
-        </div>
+              </Alert>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader
+            title={t("dashboard.history.title")}
+            description={t("dashboard.history.description")}
+            actions={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onOpenTopology}
+              >
+                <GitFork className="h-4 w-4" />
+                {t("nav.topology")}
+              </Button>
+            }
+          />
+          <CardBody className="space-y-2">
+            {scans.length === 0 ? (
+              <EmptyState
+                icon={<History className="h-5 w-5" />}
+                title={t("dashboard.history.empty")}
+              />
+            ) : (
+              scans.slice(0, 10).map((scan) => {
+                const failed = Boolean(scan.error);
+                const tone = failed
+                  ? "danger"
+                  : scan.online_count > 0
+                    ? "success"
+                    : "neutral";
+                return (
+                  <div
+                    key={scan.id}
+                    className={cn(
+                      "rounded-xl border border-border bg-surface px-4 py-3",
+                      failed && "border-danger/30 bg-danger/5"
+                    )}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-fg">
+                        {scan.subnet}
+                        <Badge tone={scan.scan_mode === "full" ? "info" : "neutral"}>
+                          {scan.scan_mode}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted">
+                        <Badge tone={tone} dot>
+                          {failed
+                            ? t("status.down")
+                            : t("dashboard.history.devicesFound", {
+                                count: scan.discovered_count
+                              })}
+                        </Badge>
+                        <span>{formatRelative(scan.started_at, t)}</span>
+                      </div>
+                    </div>
+                    {scan.result_summary && !failed && (
+                      <p className="mt-1 whitespace-pre-line text-xs text-muted">
+                        {scan.result_summary}
+                      </p>
+                    )}
+                    {failed && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs text-danger">
+                          <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
+                          {scan.error}
+                        </p>
+                        {scan.error_hint && (
+                          <p className="text-xs italic text-muted">
+                            Hint: {scan.error_hint}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </CardBody>
+        </Card>
       </section>
     </div>
   );

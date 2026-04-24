@@ -1,16 +1,16 @@
 services:
-  home-topology-mapper:
+  hometopo:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: home-topology-mapper
+    container_name: hometopo
     restart: unless-stopped
     network_mode: host
     cap_add:
       - NET_RAW
       - NET_ADMIN
     environment:
-      HTM_DATABASE_URL: ${HTM_DATABASE_URL:-sqlite:////data/home-topology.db}
+      HTM_DATABASE_URL: ${HTM_DATABASE_URL:-sqlite:////data/hometopo.db}
       HTM_SCAN_SUBNETS: ${HTM_SCAN_SUBNETS:-192.168.1.0/24}
       HTM_SCAN_MODE: ${HTM_SCAN_MODE:-quick}
       HTM_OFFLINE_RETENTION_DAYS: ${HTM_OFFLINE_RETENTION_DAYS:-30}
@@ -25,7 +25,6 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      org.opencontainers.image.title: "Home Topology Mapper"
+      org.opencontainers.image.title: "HomeTopo"
       org.opencontainers.image.description: "Automated homelab network topology visualization"
-      org.opencontainers.image.vendor: "Home Topology Mapper Team"
-
+      org.opencontainers.image.vendor: "HomeTopo Team"

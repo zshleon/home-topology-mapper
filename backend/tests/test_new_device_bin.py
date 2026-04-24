@@ -45,8 +45,6 @@ def test_manual_position_preserved(session: Session):
     ensure_topology_for_devices(session)
     
     node_1 = session.exec(select(TopologyNode).where(TopologyNode.device_id == "d1")).one()
-    original_x = node_1.x
-    
     # Manual move
     node_1.x = 1337
     node_1.y = 1337

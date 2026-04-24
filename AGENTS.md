@@ -1,6 +1,6 @@
 # AI Collaboration Guide
 
-Home Topology Mapper is expected to be developed by a single maintainer working with AI agents such as Codex and Antigravity.
+HomeTopo is expected to be developed by a single maintainer working with AI agents such as Codex and Antigravity.
 
 ## Working Rules
 

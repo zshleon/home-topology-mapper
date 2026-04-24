@@ -1,0 +1,167 @@
+{
+  "brand": {
+    "name": "HomeTopo",
+    "tagline": "Home network topology"
+  },
+  "nav": {
+    "overview": "Overview",
+    "devices": "Devices",
+    "topology": "Topology",
+    "github": "GitHub"
+  },
+  "theme": {
+    "aria": "Switch theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "common": {
+    "language": "Language",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "screenshot": "Screenshot",
+    "print": "Print",
+    "exit": "Exit",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filterAll": "All",
+    "loading": "Loading…",
+    "empty": "No data",
+    "yes": "Yes",
+    "no": "No",
+    "online": "Online",
+    "offline": "Offline",
+    "never": "never",
+    "copied": "Copied"
+  },
+  "status": {
+    "healthy": "All good",
+    "degraded": "Degraded",
+    "down": "Down"
+  },
+  "dashboard": {
+    "heroTitle": "Home network topology",
+    "heroSubtitle": "Discover, identify and continuously observe every device on your home network.",
+    "cta": "Run a scan",
+    "stats": {
+      "total": "Total devices",
+      "totalHint": "tracked",
+      "online": "Online",
+      "onlineHint": "reachable on last scan",
+      "offline": "Offline",
+      "offlineHint": "within retention, unreachable",
+      "nodes": "Topology nodes",
+      "nodesHint": "including backbone gear"
+    },
+    "scan": {
+      "title": "Run a scan",
+      "description": "Quick for daily checks. Full digs into ports and services.",
+      "subnets": "Subnets",
+      "subnetsPlaceholder": "e.g. 192.168.1.0/24, comma-separated",
+      "mode": "Mode",
+      "start": "Start scan",
+      "running": "Scanning…",
+      "lastRun": "Last run",
+      "modeQuick": "quick — fast",
+      "modeFull": "full — deep"
+    },
+    "history": {
+      "title": "Scan history",
+      "description": "The last 10 scans",
+      "empty": "No scans yet. Run one above.",
+      "devicesFound": "{{count}} devices found"
+    },
+    "diagnostics": {
+      "title": "Scanner self-check",
+      "ok": "nmap is ready.",
+      "warn": "nmap is not ready — check container capability (NET_RAW) or host install."
+    }
+  },
+  "devices": {
+    "title": "Device inventory",
+    "subtitle": "Every device ever seen, sorted by last-online time.",
+    "filters": {
+      "search": "Search name, IP, MAC, vendor",
+      "type": "Filter by type"
+    },
+    "table": {
+      "name": "Name",
+      "ip": "IP address",
+      "mac": "MAC address",
+      "vendor": "Vendor",
+      "type": "Type",
+      "status": "Status",
+      "lastSeen": "Last seen"
+    },
+    "empty": {
+      "title": "No devices yet",
+      "description": "Run a scan from the overview page to discover your network."
+    }
+  },
+  "topology": {
+    "title": "Network topology",
+    "subtitle": "Drag nodes to reposition. Select a node to edit its metadata.",
+    "retention": "retention {{days}}d",
+    "edgeHint": "Ethernet is solid, Wi-Fi is dashed. Changes apply after Save.",
+    "legend": {
+      "router": "Router",
+      "switch": "Switch",
+      "ap": "AP",
+      "server": "Server",
+      "iot": "IoT",
+      "phone": "Phone",
+      "computer": "Computer",
+      "printer": "Printer",
+      "camera": "Camera",
+      "unknown": "Unknown"
+    },
+    "properties": {
+      "title": "Node properties",
+      "empty": "Select a node to edit.",
+      "displayName": "Display name",
+      "type": "Type",
+      "ip": "IP",
+      "mac": "MAC",
+      "notes": "Notes",
+      "save": "Save",
+      "pin": "Pin position",
+      "unpin": "Unpin"
+    }
+  },
+  "deviceTypes": {
+    "router": "Router",
+    "switch": "Switch",
+    "ap": "Access point",
+    "server": "Server",
+    "nas": "NAS",
+    "iot": "IoT device",
+    "phone": "Phone",
+    "tablet": "Tablet",
+    "computer": "Computer",
+    "laptop": "Laptop",
+    "printer": "Printer",
+    "camera": "Camera",
+    "tv": "TV / streamer",
+    "speaker": "Speaker",
+    "gaming": "Game console",
+    "unknown": "Unknown"
+  },
+  "errors": {
+    "loadConfig": "Failed to load config. Is the backend running?",
+    "loadDevices": "Failed to load devices.",
+    "loadTopology": "Failed to load topology.",
+    "scanFailed": "Scan failed: {{message}}",
+    "saveFailed": "Save failed: {{message}}"
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{n}} min ago",
+    "hoursAgo": "{{n}} h ago",
+    "daysAgo": "{{n}} d ago",
+    "atDate": "on {{date}}"
+  }
+}

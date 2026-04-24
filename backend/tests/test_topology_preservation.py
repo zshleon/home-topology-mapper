@@ -1,6 +1,6 @@
 import pytest
 from sqlmodel import Session, create_engine, SQLModel, select
-from app.models import Device, DeviceStatus, DeviceType, TopologyEdge, EdgeConfidence, LinkType, TopologyNode
+from app.models import Device, DeviceStatus, DeviceType, TopologyEdge, EdgeConfidence, LinkType
 from app.services.topology import ensure_topology_for_devices
 
 @pytest.fixture(name="session")
