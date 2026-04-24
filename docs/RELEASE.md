@@ -1,6 +1,6 @@
 # Release Guide
 
-Home Topology Mapper uses simple semantic versioning once tags start.
+HomeTopo uses simple semantic versioning once tags start.
 
 ## Versioning
 

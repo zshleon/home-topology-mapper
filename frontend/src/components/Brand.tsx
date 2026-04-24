@@ -19,18 +19,18 @@ export function BrandMark({ className, size = 24 }: BrandMarkProps) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="homeweb-brand" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id="hometopo-brand" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="rgb(var(--brand))" />
           <stop offset="100%" stopColor="rgb(var(--info))" />
         </linearGradient>
       </defs>
-      <g stroke="url(#homeweb-brand)" strokeWidth="1.6" strokeLinecap="round">
+      <g stroke="url(#hometopo-brand)" strokeWidth="1.6" strokeLinecap="round">
         <line x1="16" y1="16" x2="6"  y2="6"  />
         <line x1="16" y1="16" x2="26" y2="6"  />
         <line x1="16" y1="16" x2="6"  y2="26" />
         <line x1="16" y1="16" x2="26" y2="26" />
       </g>
-      <g fill="url(#homeweb-brand)">
+      <g fill="url(#hometopo-brand)">
         <circle cx="16" cy="16" r="4.2" />
         <circle cx="6"  cy="6"  r="2.4" />
         <circle cx="26" cy="6"  r="2.4" />

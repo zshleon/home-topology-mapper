@@ -1,6 +1,6 @@
 # Sprint Status — UI Overhaul v2
 
-> Supervisor: Claude. Mission: make Home Topology Mapper 易用、漂亮舒服、广受欢迎.
+> Supervisor: Claude. Mission: make HomeTopo 易用、漂亮舒服、广受欢迎.
 > Branch: `feat/ui-overhaul-v2` against `main`.
 > Started: 2026-04-24. Commits shipped on this branch tell the whole story.
 
@@ -19,7 +19,7 @@ brand identity — plus the first backend hardening pass (CORS + config).
 - [x] **F2** UI primitives (`Button`, `Card`, `Badge`, `Input`, `Select`, `StatCard`, `Alert`, `EmptyState`)
 - [x] **F3** ThemeProvider + ThemeToggle + LanguageSwitcher
 - [x] **F4** i18n — i18next with zh-CN default, en fallback; full translation coverage
-- [x] **F5** Brand — Home Topology Mapper name, SVG network glyph, inline favicon, bilingual tagline
+- [x] **F5** Brand — HomeTopo name, SVG network glyph, inline favicon, bilingual tagline
 - [x] **F6** App shell rewrite — sidebar + top bar + mobile nav
 - [x] **F7** Dashboard rewrite — hero gradient, StatCard grid, Alert, relative time
 - [x] **F8** Devices rewrite — filter card, mobile cards, desktop table
@@ -35,7 +35,7 @@ brand identity — plus the first backend hardening pass (CORS + config).
 - Vitest / @testing-library setup for frontend primitives
 
 ## Naming (locked in)
-- Product: **Home Topology Mapper**
+- Product: **HomeTopo**
 - Tagline (zh): 家庭网络拓扑
 - Tagline (en): Home network topology
 - Primary brand color: indigo `--brand: 99 102 241` (light) / `129 140 248` (dark)
@@ -62,7 +62,7 @@ See [`APPLY.md`](APPLY.md) for the one-line git command.
 | F7   | `feat(dashboard): hero + StatCard grid + scan form + history card` |
 | F8   | `feat(devices): filter card + mobile cards + desktop table + i18n` |
 | F9   | `feat(topology): custom TopologyNode + themed canvas + redesigned inspector` |
-| D1   | `docs(readme): bilingual Home Topology Mapper README + brand logo` |
+| D1   | `docs(readme): bilingual HomeTopo README + brand logo` |
 | D2   | `ci: run pytest + ruff on backend, add pip/npm caches, typecheck frontend` |
 | fix  | `fix(frontend): sync package lock for i18n deps` |
 | fix  | `fix(ci): address typecheck and ruff failures` |

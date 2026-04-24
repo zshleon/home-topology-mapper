@@ -12,6 +12,8 @@ const languages: LanguageOption[] = [
   { code: "en",    label: "EN"   }
 ];
 
+const STORAGE_KEY = "hometopo.lang";
+
 function normalize(lang: string): string {
   if (!lang) return "zh-CN";
   if (lang.toLowerCase().startsWith("zh")) return "zh-CN";
@@ -21,6 +23,15 @@ function normalize(lang: string): string {
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
   const current = normalize(i18n.language);
+
+  const changeLanguage = (code: string) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, code);
+    } catch {
+      /* storage disabled - still switch for this session */
+    }
+    void i18n.changeLanguage(code);
+  };
 
   return (
     <div
@@ -38,7 +49,7 @@ export function LanguageSwitcher() {
             key={lang.code}
             role="radio"
             aria-checked={active}
-            onClick={() => i18n.changeLanguage(lang.code)}
+            onClick={() => changeLanguage(lang.code)}
             className={cn(
               "h-8 rounded-lg px-2.5 text-xs font-medium transition-colors",
               active

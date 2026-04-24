@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Home Topology Mapper"
+    app_name: str = "HomeTopo"
     database_url: str = "sqlite:///./data/home-topology.db"
     scan_subnets: str = "192.168.1.0/24"
     scan_mode: str = "quick"
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     static_dir: Path = Path("static")
 
     # --- Brand / UI ---
-    ui_brand_name: str = "Home Topology Mapper"
+    ui_brand_name: str = "HomeTopo"
     ui_brand_tagline_zh: str = "家庭网络拓扑"
     ui_brand_tagline_en: str = "Home network topology"
     default_locale: str = "zh-CN"

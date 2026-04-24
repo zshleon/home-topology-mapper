@@ -6,8 +6,8 @@ import zhCN from "./locales/zh-CN.json";
 import en from "./locales/en.json";
 
 /**
- * Chinese-first by design. Persist an explicit user pick, otherwise start in
- * zh-CN instead of inheriting an English browser locale.
+ * Follow the browser language by default. A manual choice is saved by the
+ * language switcher and wins on later visits.
  */
 void i18n
   .use(LanguageDetector)
@@ -23,9 +23,9 @@ void i18n
     load: "currentOnly",
     interpolation: { escapeValue: false },
     detection: {
-      order: ["localStorage"],
-      caches: ["localStorage"],
-      lookupLocalStorage: "home-topology-mapper.lang"
+      order: ["localStorage", "navigator", "htmlTag"],
+      caches: [],
+      lookupLocalStorage: "hometopo.lang"
     }
   });
 

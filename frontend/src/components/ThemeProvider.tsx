@@ -10,7 +10,7 @@ import {
 
 export type Theme = "light" | "dark" | "system";
 
-const STORAGE_KEY = "homeweb.theme";
+const STORAGE_KEY = "hometopo.theme";
 
 interface ThemeContextValue {
   theme: Theme;

@@ -1,6 +1,6 @@
 # Security Policy
 
-Home Topology Mapper is intended for trusted home and homelab networks. It scans private LAN ranges and stores local topology data in SQLite.
+HomeTopo is intended for trusted home and homelab networks. It scans private LAN ranges and stores local topology data in SQLite.
 
 ## Supported Versions
 

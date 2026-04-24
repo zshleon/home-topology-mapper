@@ -1,6 +1,6 @@
 # Antigravity Handoff
 
-You are collaborating on Home Topology Mapper with Codex and the maintainer.
+You are collaborating on HomeTopo with Codex and the maintainer.
 
 ## Project Goal
 
